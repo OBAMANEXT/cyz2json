@@ -1,0 +1,131 @@
+#+TITLE: Cyz2Json - Convert flow cytometry CYZ files to JSON format.
+
+* Introduction
+
+This program converts flow cytometry data stored in a CytoBuoy CYZ
+format file to JSON format.
+
+Although CYZ files work with the Cytobuoy supplied CytoClus program,
+we want to access the data from a wider set of data science tooling
+including Python and R. We therefore convert to JSON.
+
+This program uses the [[https://github.com/Cytobuoy/CyzFile-API][CytoBuoy CyzFile API]] and targets the Microsoft
+.NET 7 framework on Windows, macOS or Linux.
+
+* Installation
+
+The first step is to install the Microsoft dotnet runtime version 7.
+Microsoft provides detailed instructions at
+https://learn.microsoft.com/en-us/dotnet/core/install/.
+
+For example, installation on Linux Ubuntu 22.04 is as follows:
+
+#+begin_src bash
+sudo apt-get update && sudo apt-get install -y dotnet-sdk-7.0
+#+end_src
+
+You can test that =dotnet= is installed on your system by typing:
+
+#+begin_src bash
+dotnet --info
+#+end_src
+
+The =Cyz2Json= program can then be compiled by cloning the project
+from GitHub and typing =dotnet build -o bin=.
+
+* Running the program
+
+The program can be run, on Linux, for example, as follows:
+
+#+begin_src bash
+dotnet bin/Cyz2Json.dll input.cyz --output output.json
+#+end_src
+
+On Windows
+
+#+begin_src bash
+Cyz2Json.EXE input.cyz --output output.json
+#+end_src
+
+* Bulk file conversion
+
+We often find ourselves needing to undertake a bulk conversion of a
+large set of files. The following shell script can help:
+
+#+begin_src bash
+#!/usr/bin/env bash
+for file in *.cyz
+do
+    dotnet ~/git/Cyz2Json/bin/Cyz2Json.dll "$file" --output "$file".json
+done
+#+end_src
+
+* Processing CYZ JSON files using Python
+
+To load a JSON flow cytometry data file into Python:
+
+#+begin_src python
+
+import json
+
+data = json.load(open("pond.json", encoding="utf-8-sig"))
+print(data)
+
+#+end_src
+
+Note the need to explicitly specify the encoding to deal with
+Microsoft's and Python's differences in interpretation of the
+standards regarding byte order marks in UTF-8 files.
+
+* R example
+
+To load a JSON flow cytometry data file into R:
+
+#+begin_src R
+
+library(jsonlite)
+
+json_data <- fromJSON("pond.json")
+print(json_data)
+
+#+end_src
+
+* Notes
+
+If a CYZ file contains images, we currently base64 encode them and
+include them inline in the JSON. This is costly in terms of disk and
+only time will tell if it is a sensible design decision. A future
+enhancement would be to include a flag that writes the files out as
+JPEG images.
+
+Note that the images are un-cropped. This is an expedience to allow
+cross platform operation (The CyzFile-API only supports cropping on
+Windows platforms).
+
+* Acknowledgements
+
+My thanks to the following organisations for supporting this work:
+
+[[https://www.turing.ac.uk/][The Alan Turing Institute]].
+
+[[https://www.cefas.co.uk][The Centre for Environment, Fisheries and Aquaculture Science (Cefas)]]
+
+[[https://www.cytobuoy.com/][CytoBuoy b.v.]]
+
+I am grateful to Rob Lievaart at Cytobuoy for providing the libraries,
+code and examples on which this software is based. The CyzFile-API is
+licensed under the terms described in CyzFile-API_LICENSE.TXT.
+
+Thanks to Eric Payne at Cefas for Visual Studio wizardry.
+
+* Disclaimers
+
+The [[https://obama-next.eu/][OBAMA-NEXT]] project has been approved under
+HORIZON-CL6-2022-BIODIV-01-01: Observing and mapping biodiversity and
+ecosystems, with particular focus on coastal and marine ecosystems
+(Grant Agreement 101081642). Funded by the European Union and UK
+Research and Innovation. Views and opinions expressed are however
+those of the authors only and do not necessarily reflect those of the
+European Union or UK Research and Innovation. Neither the European
+Union nor the granting authority can be held responsible for them.
+q
