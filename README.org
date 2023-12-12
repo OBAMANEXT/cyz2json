@@ -108,6 +108,8 @@ My thanks to the following organisations for supporting this work:
 
 [[https://www.turing.ac.uk/][The Alan Turing Institute]].
 
+[[https://www.finmari-infrastructure.fi/][The Finnish Marine Research Infrastructure consortium (FINMARI)]]
+
 [[https://www.cefas.co.uk][The Centre for Environment, Fisheries and Aquaculture Science (Cefas)]]
 
 [[https://www.cytobuoy.com/][CytoBuoy b.v.]]
