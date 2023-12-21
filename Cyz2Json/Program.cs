@@ -11,10 +11,7 @@ using CytoSense.CytoSettings;
 using CytoSense.Data.ParticleHandling;
 using CytoSense.Data.ParticleHandling.Channel;
 using Newtonsoft.Json;
-
-
 using System.CommandLine;
-using System.CommandLine.Invocation;
 
 // Design decisions:
 //
@@ -29,7 +26,6 @@ using System.CommandLine.Invocation;
 // ourselves later and giving us the option of other toolkits. This also
 // allows us to drop OpenCVSharp which seems problematic for cross
 // platform support.
-
 
 namespace Cyz2Json
 {
