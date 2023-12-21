@@ -42,12 +42,16 @@ namespace Cyz2Json
                 "--output",
                 description: "JSON output file");
 
+            var rawOption = new Option<bool>(
+                name: "--raw",
+                description: "Do not apply the moving weighted average filtering algorithm to pulse shapes. Export raw, unsmoothed data.");
+
             var rootCommand = new RootCommand("Convert CYZ files to JSON")
             {
-                inputArgument, outputOption
+                inputArgument, outputOption, rawOption
             };
 
-            rootCommand.SetHandler(Convert, inputArgument, outputOption);
+            rootCommand.SetHandler(Convert, inputArgument, outputOption, rawOption);
 
             rootCommand.Invoke(args);
         }
@@ -55,9 +59,9 @@ namespace Cyz2Json
         /// Convert the flow cytometry data in the file designated by cyzFilename to Javscript Object Notation (JSON).
         /// If jsonFilename is null, echo the JSON to the console, otherwise store it a file designated by jsonFilename.
         /// </summary>
-        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename)
+        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw)
         {
-            var data = LoadData(cyzFilename.FullName);
+            var data = LoadData(cyzFilename.FullName, isRaw);
 
             StreamWriter streamWriter;
 
@@ -79,7 +83,7 @@ namespace Cyz2Json
         /// <summary>
         /// Load all the flow cytometry data from the CYZ file designated by pathname.
         /// </summary>
-        private static Dictionary<string, object> LoadData(string pathname)
+        private static Dictionary<string, object> LoadData(string pathname, bool isRaw)
         {
             var data = new Dictionary<string, object>();
 
@@ -106,23 +110,23 @@ namespace Cyz2Json
                 dfw.ConcentrationMode = ConcentrationModeEnum.Pre_measurement_FTDI;
             }
             data["instrument"] = LoadInstrument(dfw);
-            data["particles"] = LoadParticles(dfw);
+            data["particles"] = LoadParticles(dfw, isRaw);
             data["images"] = LoadImages(dfw);
 
             return data;
         }
 
-        private static List<Dictionary<string, object>> LoadParticles(DataFileWrapper dfw)
+        private static List<Dictionary<string, object>> LoadParticles(DataFileWrapper dfw, bool isRaw)
         {
             var particles = new List<Dictionary<string, object>>();
 
             foreach (var particle in dfw.SplittedParticles)
-                particles.Add(LoadParticle(particle));
+                particles.Add(LoadParticle(particle, isRaw));
 
             return particles;
         }
 
-        private static Dictionary<string, object> LoadParticle(Particle particle)
+        private static Dictionary<string, object> LoadParticle(Particle particle, bool isRaw)
         {
 
             var particleData = new Dictionary<string, object>();
@@ -139,7 +143,11 @@ namespace Cyz2Json
                 var pulseShape = new Dictionary<string, object>();
 
                 pulseShape["description"] = cd.Information.Description;
-                pulseShape["values"] = cd.Data;
+
+                if (isRaw)
+                    pulseShape["values"] = cd.Data_mV_unsmoothed;
+                else
+                    pulseShape["values"] = cd.Data;
 
                 pulseShapes.Add(pulseShape);
             }
