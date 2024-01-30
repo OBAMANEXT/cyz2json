@@ -27,7 +27,6 @@ def extract(particles):
                 "forward scatter left",
                 "forward scatter right",
                 "curvature",
-                "fws",
             ]:
                 title = title.replace(" ", "_").lower()
 
