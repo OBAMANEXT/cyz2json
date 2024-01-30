@@ -19,74 +19,24 @@ def extract(particles):
 
         line["id"] = particle["particleId"]
 
-        for pulse_shape in particle["pulseShapes"]:
-            values = pulse_shape["values"]
-            title = pulse_shape["description"]
-
-            # Ignore these curves
-            if title.lower() not in [
-                "forward scatter left",
-                "forward scatter right",
-                "curvature",
-                "fws r",
-                "fws l",
-            ]:
-                title = title.replace(" ", "_").lower()
-
-                # print(f"title = {title}")
-                # print(f"values = {values}")
-
-                total = sum(values)
-                line[f"{title}_total"] = total
-                line[f"{title}_maximum"] = max(values)
-                line[f"{title}_minimum"] = min(values)
-                line[f"{title}_first"] = values[0]
-                line[f"{title}_last"] = values[-1]
-                line[f"{title}_average"] = statistics.mean(values)
-
-                N = len(values) - 1
-
-                cg = sum([n * values[n] for n in range(len(values))]) / sum(values)
-
-                line[f"{title}_centre_of_gravity"] = cg
-
-                line[f"{title}_fill_factor"] = (sum(values) ** 2) / (
-                    (N + 1) * sum(x**2 for x in values)
-                )
-
-                corespeed = 2
-                beamwidth = 5
-                dx = corespeed / 4
-                threshold = max(values) / 2
-
-                highs = [x for (x, y) in enumerate(values) if y > threshold]
-                first = highs[0]
-                last = highs[-1]
-                l = last - first + 1
-                lraw = l * dx
-                u = (beamwidth / lraw) ** 2
-                line[f"{title}_length"] = lraw * (
-                    70 / (70 + u + 0.5 * u**2 + 1.5 * u**4)
-                )
-
-                t1 = sum((values[i] - values[i - 1]) ** 2 for i in range(1, N))
-                # print(f"t1 = {t1}")
-
-                t2 = sum(x**2 for x in values) - (total**2 / (N + 1))
-                # print(f"t2 = {t2}")
-
-                try:
-                    line[f"{title}_number_of_cells"] = (
-                        (N + 1) / (2 * math.pi)
-                    ) * math.sqrt(t1 / t2)
-                except:
-                    line[f"{title}_number_of_cells"] = 0
-
-                line[f"{title}_asymmetry"] = abs((2 * cg / (N + 1)) - 1)
-
-                line[f"{title}_inertia"] = (
-                    sum([x**2 * y for (x, y) in enumerate(values)]) - cg**2 * total
-                ) / (1 / 12 * (N + 1) ** 2 * total)
+        for parameter in particle["parameters"]:
+            description = parameter["description"]
+            line[f"{description}_length"] = parameter["length"]
+            line[f"{description}_total"] = parameter["total"]
+            line[f"{description}_maximum"] = parameter["maximum"]
+            line[f"{description}_average"] = parameter["average"]
+            line[f"{description}_inertia"] = parameter["inertia"]
+            line[f"{description}_centreOfGravity"] = parameter["centreOfGravity"]
+            line[f"{description}_fillFactor"] = parameter["fillFactor"]
+            line[f"{description}_asymmetry"] = parameter["asymmetry"]
+            line[f"{description}_numberOfCells"] = parameter["numberOfCells"]
+            line[f"{description}_sampleLength"] = parameter["sampleLength"]
+            line[f"{description}_timeOfArrival"] = parameter["timeOfArrival"]
+            line[f"{description}_first"] = parameter["first"]
+            line[f"{description}_last"] = parameter["last"]
+            line[f"{description}_minimum"] = parameter["minimum"]
+            line[f"{description}_swscov"] = parameter["swscov"]
+            line[f"{description}_variableLength"] = parameter["variableLength"]
 
         lines.append(line)
 
