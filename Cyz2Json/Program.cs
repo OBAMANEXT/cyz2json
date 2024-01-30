@@ -170,7 +170,7 @@ namespace Cyz2Json
                 parameter["inertia"] = cd.get_Parameter(ChannelData.ParameterSelector.Inertia);
                 parameter["centreOfGravity"] = cd.get_Parameter(ChannelData.ParameterSelector.CentreOfGravity);
                 parameter["fillFactor"] = cd.get_Parameter(ChannelData.ParameterSelector.FillFactor);
-                parameter["asmmetry"] = cd.get_Parameter(ChannelData.ParameterSelector.Asymmetry);
+                parameter["asymmetry"] = cd.get_Parameter(ChannelData.ParameterSelector.Asymmetry);
                 parameter["numberOfCells"] = cd.get_Parameter(ChannelData.ParameterSelector.NumberOfCells);
                 parameter["sampleLength"] = cd.get_Parameter(ChannelData.ParameterSelector.SampleLength);
                 parameter["timeOfArrival"] = cd.get_Parameter(ChannelData.ParameterSelector.TimeOfArrival);
@@ -180,6 +180,7 @@ namespace Cyz2Json
                 parameter["swscov"] = cd.get_Parameter(ChannelData.ParameterSelector.SWSCOV);
                 parameter["variableLength"] = cd.get_Parameter(ChannelData.ParameterSelector.VariableLength);
 
+                parameters.Add(parameter);
             }
 
             particleData["parameters"] = parameters;
