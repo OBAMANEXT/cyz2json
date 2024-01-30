@@ -8,6 +8,7 @@ import statistics
 import pandas as pd
 import sys
 import os
+import math
 
 
 def extract(particles):
@@ -27,10 +28,16 @@ def extract(particles):
                 "forward scatter left",
                 "forward scatter right",
                 "curvature",
+                "fws r",
+                "fws l",
             ]:
                 title = title.replace(" ", "_").lower()
 
-                line[f"{title}_total"] = sum(values)
+                # print(f"title = {title}")
+                # print(f"values = {values}")
+
+                total = sum(values)
+                line[f"{title}_total"] = total
                 line[f"{title}_maximum"] = max(values)
                 line[f"{title}_minimum"] = min(values)
                 line[f"{title}_first"] = values[0]
@@ -39,18 +46,47 @@ def extract(particles):
 
                 N = len(values) - 1
 
-                line[f"{title}_centre_of_gravity"] = sum(
-                    [n * values[n] for n in range(len(values))]
-                ) / sum(values)
+                cg = sum([n * values[n] for n in range(len(values))]) / sum(values)
+
+                line[f"{title}_centre_of_gravity"] = cg
 
                 line[f"{title}_fill_factor"] = (sum(values) ** 2) / (
                     (N + 1) * sum(x**2 for x in values)
                 )
 
-                # line[f"{title}_length"] = min(values)  # TODO
-                # line[f"{title}_number_of_cells"] = min(values)  # TODO
+                corespeed = 2
+                beamwidth = 5
+                dx = corespeed / 4
+                threshold = max(values) / 2
 
-                # line[f"median_{title}"] = statistics.median(values)
+                highs = [x for (x, y) in enumerate(values) if y > threshold]
+                first = highs[0]
+                last = highs[-1]
+                l = last - first + 1
+                lraw = l * dx
+                u = (beamwidth / lraw) ** 2
+                line[f"{title}_length"] = lraw * (
+                    70 / (70 + u + 0.5 * u**2 + 1.5 * u**4)
+                )
+
+                t1 = sum((values[i] - values[i - 1]) ** 2 for i in range(1, N))
+                # print(f"t1 = {t1}")
+
+                t2 = sum(x**2 for x in values) - (total**2 / (N + 1))
+                # print(f"t2 = {t2}")
+
+                try:
+                    line[f"{title}_number_of_cells"] = (
+                        (N + 1) / (2 * math.pi)
+                    ) * math.sqrt(t1 / t2)
+                except:
+                    line[f"{title}_number_of_cells"] = 0
+
+                line[f"{title}_asymmetry"] = abs((2 * cg / (N + 1)) - 1)
+
+                line[f"{title}_inertia"] = (
+                    sum([x**2 * y for (x, y) in enumerate(values)]) - cg**2 * total
+                ) / (1 / 12 * (N + 1) ** 2 * total)
 
         lines.append(line)
 
