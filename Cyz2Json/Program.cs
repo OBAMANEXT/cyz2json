@@ -253,6 +253,8 @@ namespace Cyz2Json
 
             instrument["name"] = dfw.CytoSettings.name;
             instrument["serialNumber"] = dfw.CytoSettings.SerialNumber;
+            instrument["sampleCoreSpeed"] = dfw.CytoSettings.SampleCorespeed;
+            instrument["laserBeamWidth"] = dfw.CytoSettings.LaserBeamWidth;
             instrument["channels"] = LoadChannels(dfw);
             instrument["measurementSettings"] = LoadMeasurementSettings(dfw);
             instrument["measurementResults"] = LoadMeasurementResults(dfw);
