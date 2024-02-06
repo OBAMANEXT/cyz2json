@@ -9,6 +9,7 @@ import pandas as pd
 import sys
 import os
 import math
+import argparse
 
 
 def extract(particles):
@@ -46,17 +47,19 @@ def extract(particles):
 # filename = "../data/sample.cyz.json"
 
 
-def main(filename):
+def main(filename, outfile):
     data = json.load(open(filename, encoding="utf-8-sig"))
     lines = extract(data["particles"])
     df = pd.DataFrame(lines)
-    outfile = os.path.basename(filename)
-    df.to_csv(f"{outfile}.csv", index=False)
+    df.to_csv(outfile, index=False)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("listmode.py <filename.cyz.json>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Dump listmode data from a CYZ file.")
 
-    main(sys.argv[1])
+    parser.add_argument("input_file", type=str, help="The input CYZfile")
+    parser.add_argument("--output", type=str, help="The output file name (optional)")
+
+    args = parser.parse_args()
+
+    main(args.input_file, args.output)
