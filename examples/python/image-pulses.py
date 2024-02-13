@@ -6,6 +6,7 @@
 # import base64
 from PIL import Image
 import json
+import argparse
 
 # import math
 import sys
@@ -39,7 +40,7 @@ def image_particle(particle_data):
     return a
 
 
-def main(filename):
+def main(filename, output_dir):
     b = os.path.basename(filename)
 
     data = json.load(open(filename, encoding="utf-8-sig"))
@@ -47,24 +48,35 @@ def main(filename):
     for particle in data["particles"]:
         id = particle["particleId"]
         a = image_particle(particle)
-        np.save(f"{b}-{id}.npy", a)
+        # np.save(f"{output_dir}/{b}-{id}.npy", a)
 
         # Normalize to 0-1
         a = (a - np.min(a)) / (np.max(a) - np.min(a))
 
-        # Scale to 0-255
-        a = a * 255
+        a = a * (256 * 256 * 256 - 1)
 
-        # Convert to integers
-        a = a.astype(np.uint8)
+        red = a // (256**2)
+        green = (a // 256) % 256
+        blue = a % 256
 
-        image = Image.fromarray(a)
-        image.save(f"{b}-{id}.png")
+        rgb_image_array = np.stack((red, green, blue), axis=-1)
+
+        # Convert the 3D array into an image using Pillow
+        image = Image.fromarray(np.uint8(rgb_image_array))
+
+        # # Convert to integers
+        # a = a.astype(np.uint8)
+
+        # image = Image.fromarray(a)
+        image.save(f"{output_dir}/{b}-{id}.png")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("image-pulses.py <filename.cyz.json>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Dump listmode data from a CYZ file.")
 
-    main(sys.argv[1])
+    parser.add_argument("input_file", type=str, help="The input CYZfile")
+    parser.add_argument("--output", type=str, help="The output directorye (optional)")
+
+    args = parser.parse_args()
+
+    main(args.input_file, args.output)
