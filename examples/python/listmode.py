@@ -51,6 +51,7 @@ def main(filename, outfile):
     data = json.load(open(filename, encoding="utf-8-sig"))
     lines = extract(data["particles"])
     df = pd.DataFrame(lines)
+    df.insert(loc=0, column="filename", value=os.path.basename(filename))
     df.to_csv(outfile, index=False)
 
 
