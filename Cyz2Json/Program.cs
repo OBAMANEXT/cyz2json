@@ -4,8 +4,8 @@
 // Convert CYZ flow cytometry files to a JSON format.
 //
 // Copyright(c) 2023 Centre for Environment, Fisheries and Aquaculture Science.
-//using CytoSense.Data;
-
+//
+using CytoSense.Data;
 using CytoSense.CytoSettings;
 using CytoSense.Data.ParticleHandling;
 using CytoSense.Data.ParticleHandling.Channel;
