@@ -35,8 +35,7 @@ using System.Reflection;
 // discover like this, so to me it makes sense to retain any instrument
 // setting we can grab, which is what this modification does by default.
 // Make the .json files as they previously were in the last commit with:
-// --verbose false
-// It's not exactly what verbose means but you get the idea.
+// --metadatagreedy false
 
 namespace Cyz2Json
 {
@@ -56,17 +55,17 @@ namespace Cyz2Json
                 name: "--raw",
                 description: "Do not apply the moving weighted average filtering algorithm to pulse shapes. Export raw, unsmoothed data.");
 
-            var verboseOption = new Option<bool>(
-                name: "--verbose",
+            var metadatagreedyOption = new Option<bool>(
+                name: "--metadatagreedy",
                 description: "Save all possible measurement settings with your file (default: true)",
                 getDefaultValue: () => true);
 
             var rootCommand = new RootCommand("Convert CYZ files to JSON")
             {
-                inputArgument, outputOption, rawOption, verboseOption
+                inputArgument, outputOption, rawOption, metadatagreedyOption
             };
 
-            rootCommand.SetHandler(Convert, inputArgument, outputOption, rawOption, verboseOption);
+            rootCommand.SetHandler(Convert, inputArgument, outputOption, rawOption, metadatagreedyOption);
 
             rootCommand.Invoke(args);
         }
@@ -74,9 +73,9 @@ namespace Cyz2Json
         /// Convert the flow cytometry data in the file designated by cyzFilename to Javscript Object Notation (JSON).
         /// If jsonFilename is null, echo the JSON to the console, otherwise store it a file designated by jsonFilename.
         /// </summary>
-        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw, bool verbose)
+        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw, bool metadatagreedy)
         {
-            var data = LoadData(cyzFilename.FullName, isRaw, verbose);
+            var data = LoadData(cyzFilename.FullName, isRaw, metadatagreedy);
 
             StreamWriter streamWriter;
 
@@ -95,7 +94,7 @@ namespace Cyz2Json
             streamWriter.Close();
         }
 
-        private static Dictionary<string, object> LoadData(string pathname, bool isRaw, bool verbose)
+        private static Dictionary<string, object> LoadData(string pathname, bool isRaw, bool metadatagreedy)
         {
             var data = new Dictionary<string, object>();
 
@@ -119,14 +118,14 @@ namespace Cyz2Json
                 Console.WriteLine("WARNING: concentration measurement disagrees with pre-concentration measurement. Using the latter.");
                 dfw.ConcentrationMode = ConcentrationModeEnum.Pre_measurement_FTDI;
             }
-            data["instrument"] = LoadInstrument(dfw, verbose);
+            data["instrument"] = LoadInstrument(dfw, metadatagreedy);
             data["particles"] = LoadParticles(dfw, isRaw);
             data["images"] = LoadImages(dfw);
 
             return data;
         }
 
-        private static Dictionary<string, object> LoadInstrument(DataFileWrapper dfw, bool verbose)
+        private static Dictionary<string, object> LoadInstrument(DataFileWrapper dfw, bool metadatagreedy)
         {
             var instrument = new Dictionary<string, object>();
 
@@ -135,15 +134,15 @@ namespace Cyz2Json
             instrument["sampleCoreSpeed"] = dfw.CytoSettings.SampleCorespeed;
             instrument["laserBeamWidth"] = dfw.CytoSettings.LaserBeamWidth;
             instrument["channels"] = LoadChannels(dfw);
-            instrument["measurementSettings"] = LoadMeasurementSettings(dfw, verbose);
+            instrument["measurementSettings"] = LoadMeasurementSettings(dfw, metadatagreedy);
             instrument["measurementResults"] = LoadMeasurementResults(dfw);
 
             return instrument;
         }
 
-        private static Dictionary<string, object> LoadMeasurementSettings(DataFileWrapper dfw, bool verbose)
+        private static Dictionary<string, object> LoadMeasurementSettings(DataFileWrapper dfw, bool metadatagreedy)
         {
-            if (verbose)
+            if (metadatagreedy)
             {
                 var measurementInstrumentSettings = new Dictionary<string, object>();
 
