@@ -1,4 +1,11 @@
-﻿using CytoSense.Data;
+﻿﻿//
+// Cyz2Json
+//
+// Convert CYZ flow cytometry files to a JSON format.
+//
+// Copyright(c) 2023 Centre for Environment, Fisheries and Aquaculture Science.
+//using CytoSense.Data;
+
 using CytoSense.CytoSettings;
 using CytoSense.Data.ParticleHandling;
 using CytoSense.Data.ParticleHandling.Channel;
@@ -6,6 +13,30 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.CommandLine;
 using System.Reflection;
+
+// Design decisions:
+//
+// We want to easily eyeball files so we choose JSON rather than a
+// binary format.
+//
+// We want all data in one file, so we include the images as base64
+// encoded chunks within the JSON rather than write them to separate
+// files.
+//
+// We don't use the Cytobuoy provided image crop, prefering to do that
+// ourselves later and giving us the option of other toolkits. This also
+// allows us to drop OpenCVSharp which seems problematic for cross
+// platform support.
+//
+// Modification by Joe Ribeiro Dec 2024: The library didn't export 
+// gain setting relating to the photomultiplier tubes. This means
+// the amplitudes can be very different from different machines with 
+// different PMT settings. I suspect there will be other settings we 
+// discover like this, so to me it makes sense to retain any instrument
+// setting we can grab, which is what this modification does by default.
+// Make the .json files as they previously were in the last commit with:
+// --verbose false
+// It's not exactly what verbose means but you get the idea.
 
 namespace Cyz2Json
 {
@@ -39,7 +70,10 @@ namespace Cyz2Json
 
             rootCommand.Invoke(args);
         }
-
+        /// <summary>
+        /// Convert the flow cytometry data in the file designated by cyzFilename to Javscript Object Notation (JSON).
+        /// If jsonFilename is null, echo the JSON to the console, otherwise store it a file designated by jsonFilename.
+        /// </summary>
         static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw, bool verbose)
         {
             var data = LoadData(cyzFilename.FullName, isRaw, verbose);
@@ -70,12 +104,18 @@ namespace Cyz2Json
             var dfw = new DataFileWrapper(pathname);
 
             dfw.CytoSettings.setChannelVisualisationMode(ChannelAccessMode.Optical_debugging);
-            ChannelData.VarLength = 13;
+            ChannelData.VarLength = 13;// Calculate the alternate variable height length parameter at a height of 13%
+            // Some old files can have a problem where the pre-concentration
+            // measurement and the actual concentration during the measurement
+            // disagree.  If this happens and you try to use the data this will
+            // result in an exception.  You can check this beforehand, and force the
+            // use of one of the concentrations during the calculations.
 
             double concentration = 0.0;
             double preconcentration = 0.0;
             if (dfw.CheckConcentration(ref concentration, ref preconcentration))
             {
+                // In this case usually the pre-concentration is the correct one, so we use that.
                 Console.WriteLine("WARNING: concentration measurement disagrees with pre-concentration measurement. Using the latter.");
                 dfw.ConcentrationMode = ConcentrationModeEnum.Pre_measurement_FTDI;
             }
@@ -159,7 +199,7 @@ namespace Cyz2Json
 
             particleData["particleId"] = particle.ID;
             particleData["hasImage"] = particle.hasImage;
-
+            // Pulse shapes
             var pulseShapes = new List<Dictionary<string, object>>();
 
             foreach (ChannelData cd in particle.ChannelData)
@@ -177,7 +217,7 @@ namespace Cyz2Json
             }
 
             particleData["pulseShapes"] = pulseShapes;
-
+            // Parameters
             var parameters = new List<Dictionary<string, object>>();
 
             foreach (ChannelData cd in particle.ChannelData)
