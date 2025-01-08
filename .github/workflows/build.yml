@@ -51,7 +51,14 @@ jobs:
           run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release --self-contained true
                 
         - name: Copy License File
-          run: cp LICENSE.txt Cyz2Json/bin/Release/net8.0/*/publish/ # Assuming LICENSE is at the root
+          if: matrix.os == 'windows-latest'
+          run: Copy-Item LICENSE.txt -Destination "Cyz2Json/bin/Release/net8.0/win-x64/publish/"
+          shell: pwsh
+
+        - name: Copy License File
+          if: matrix.os != 'windows-latest'
+          run: cp LICENSE.txt Cyz2Json/bin/Release/net8.0/*/publish/
+          shell: bash
 
         - name: Zip Release Files
           run: zip -r cyz2json-${{ matrix.os }}.zip ./Cyz2Json/bin/Release/net8.0/*/*/
