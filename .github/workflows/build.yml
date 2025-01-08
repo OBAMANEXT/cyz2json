@@ -39,13 +39,13 @@ jobs:
           shell: bash
         
         - name: Publish
-          run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release -r ${{ steps.set-rid.outputs.rid }} --self-contained true
+          run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release --self-contained true
                 
         - name: Copy License File
-          run: cp LICENSE.txt Cyz2Json/bin/Release/net7.0/${{ steps.set-rid.outputs.rid }}/publish/ # Assuming LICENSE is at the root
+          run: cp LICENSE.txt Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish/ # Assuming LICENSE is at the root
 
         - name: Zip Release Files
-          run: zip -r cyz2json-${{ matrix.os }}.zip ./Cyz2Json/bin/Release/net7.0/${{ steps.set-rid.outputs.rid }}/publish/
+          run: zip -r cyz2json-${{ matrix.os }}.zip ./Cyz2Json/bin/Release/net8.0/*/*
           shell: bash
 
         - name: Create Release
