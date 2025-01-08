@@ -1,6 +1,6 @@
 #+TITLE: Cyz2Json - Convert flow cytometry CYZ files to JSON format.
 
-![Build Cyz2Json](https://github.com/ecotaxa/cyz2json/actions/workflows/build.yml/badge.svg)
+#+HTML: <img src="https://github.com/ecotaxa/cyz2json/actions/workflows/build.yml/badge.svg" alt="Build Cyz2Json"/>
 
 
 * Introduction
