@@ -350,7 +350,7 @@ namespace Cyz2Json
                     if (particle.ImageHandling?.ImageStream?.Length > 0)
                     {
                         particle.ImageHandling.ImageStream.Position = 0;
-                        particle.ImageHandling.ImageStream.CopyTo(memoryStream);
+                        particle.ImageHandling?.ImageStream?.CopyTo(memoryStream);
                         base64String = System.Convert.ToBase64String(memoryStream.ToArray());
                         image["particleId"] = particle.ID;
                         image["base64"] = base64String;
