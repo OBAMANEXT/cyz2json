@@ -347,7 +347,7 @@ namespace Cyz2Json
 
                 using (MemoryStream memoryStream = new MemoryStream())
                 {
-                    if (particle.ImageHandling?.ImageStream.Length > 0)
+                    if (particle.ImageHandling?.ImageStream?.Length > 0)
                     {
                         particle.ImageHandling.ImageStream.Position = 0;
                         particle.ImageHandling.ImageStream.CopyTo(memoryStream);
