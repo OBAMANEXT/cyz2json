@@ -2,9 +2,14 @@ name: Build Cyz2Json
 
 on:
     push:
-        tags:
-            - 'v*'
-
+      tags:
+        - 'v*'
+    workflow_dispatch: # Allows manual triggering
+      inputs:
+        reason:
+          description: 'Reason for manual trigger'
+          required: false
+          default: 'Manual run'
 jobs:
     build:
         runs-on: ${{ matrix.os }}
