@@ -49,9 +49,9 @@ jobs:
           shell: bash
 
         - name: Create Release
-          uses: actions/create-release@v1
+          uses: actions/create-release@v3
           env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Required for creating releases
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Required for creating releases, Using the built-in token
           with:
               tag_name: ${{ github.ref_name }}   # Use the pushed tag as release name
               release_name: Release ${{ github.ref_name }} # Use github.ref_name here as well
