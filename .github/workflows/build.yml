@@ -63,20 +63,22 @@ jobs:
           uses: actions/github-script@v6
           with:
             script: |
+              const version = '${{ github.event.inputs.version || github.ref_name }}'
+              const reason = '${{ github.event.inputs.reason }}'
               try {
                 const release = await github.rest.repos.getReleaseByTag({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  tag: '${{ github.event.inputs.version || github.ref_name }}'
+                  tag: version
                 })
                 return release.data.upload_url
               } catch (error) {
                 const release = await github.rest.repos.createRelease({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  tag_name: '${{ github.event.inputs.version || github.ref_name }}',
-                  name: 'Release ${{ github.event.inputs.version || github.ref_name }}',
-                  body: '${{ github.event.inputs.reason }}'
+                  tag_name: version,
+                  name: 'Release ' + version,
+                  body: reason
                 })
                 return release.data.upload_url
               }
