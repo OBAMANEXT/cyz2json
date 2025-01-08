@@ -70,13 +70,22 @@ jobs:
               draft: false                         # Set to true for draft releases
               prerelease: false                     # Set to true for pre-releases
 
-        - name: Upload Release Asset
-          uses: actions/upload-release-asset@v1
-          env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-              upload_url: ${{ steps.create_release.outputs.upload_url }}
-              asset_path: cyz2json-${{ matrix.os }}.zip    # Path to the ZIP file
-              asset_name: cyz2json-${{ matrix.os }}.zip    # Name of the asset on the release page
-              asset_content_type: application/zip # Correct content type
+        # - name: Upload Release Asset
+        #   uses: actions/upload-release-asset@v1
+        #   env:
+        #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        #   with:
+        #       upload_url: ${{ steps.create_release.outputs.upload_url }}
+        #       asset_path: cyz2json-${{ matrix.os }}.zip    # Path to the ZIP file
+        #       asset_name: cyz2json-${{ matrix.os }}.zip    # Name of the asset on the release page
+        #       asset_content_type: application/zip # Correct content type
 
+        - name: Upload Release
+          uses: softprops/action-gh-release@v1
+          with:
+            files: cyz2json-${{ matrix.os }}.zip
+            tag_name: ${{ github.event.inputs.version || github.ref_name }}
+            name: Release ${{ github.event.inputs.version || github.ref_name }}
+            body: ${{ github.event.inputs.reason }}
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
