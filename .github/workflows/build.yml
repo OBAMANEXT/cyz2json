@@ -6,6 +6,10 @@ on:
         - 'v*'
     workflow_dispatch: # Allows manual triggering
       inputs:
+        version:
+          description: 'Version tag (e.g. v1.0.0)'
+          required: true
+          type: string
         reason:
           description: 'Reason for manual trigger'
           required: false
@@ -59,8 +63,8 @@ jobs:
           env:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Required for creating releases, Using the built-in token
           with:
-              tag_name: ${{ github.ref_name }}   # Use the pushed tag as release name
-              release_name: Release ${{ github.ref_name }} # Use github.ref_name here as well
+              tag_name: ${{ github.event.inputs.version || github.ref_name }}   # Use the pushed tag as release name
+              release_name: Release ${{ github.event.inputs.version || github.ref_name }} # Use github.ref_name here as well
               body: |
                 Automatic release created by GitHub Actions.
               draft: false                         # Set to true for draft releases
