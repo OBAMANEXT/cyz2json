@@ -1,5 +1,8 @@
 #+TITLE: Cyz2Json - Convert flow cytometry CYZ files to JSON format.
 
+![Build Cyz2Json](https://github.com/ecotaxa/cyz2json/actions/workflows/build.yml/badge.svg)
+
+
 * Introduction
 
 This program converts flow cytometry data stored in a CytoBuoy CYZ
