@@ -314,8 +314,8 @@ namespace Cyz2Json
         {
             var measurementResults = new Dictionary<string, object>();
 
-            if ( dfw.MeasurementInfo.MeasurementStart.HasValue ) {
-                measurementResults["start"] = dfw.MeasurementInfo.MeasurementStart.value;
+            if (dfw.MeasurementInfo.MeasurementStart != null) {
+                measurementResults["start"] = dfw.MeasurementInfo.MeasurementStart;
             }
 
             // measurementResults["duration"] = dfw.MeasurementInfo.ActualMeasureTime; // Robert Blackwell line
