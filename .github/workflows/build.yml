@@ -41,8 +41,32 @@ jobs:
         - name: Publish
           run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release -r ${{ steps.set-rid.outputs.rid }} --self-contained true
                 
-        - name: Upload artifacts
-          uses: actions/upload-artifact@v3
-          with:
-            name: cyz2json-${{ matrix.os }}
-            path: Cyz2Json/bin/Release/net7.0/${{ steps.set-rid.outputs.rid }}/publish/
+        - name: Copy License File
+          run: cp LICENSE.txt Cyz2Json/bin/Release/net7.0/${{ steps.set-rid.outputs.rid }}/publish/ # Assuming LICENSE is at the root
+
+        - name: Zip Release Files
+          run: zip -r cyz2json-${{ matrix.os }}.zip ./Cyz2Json/bin/Release/net7.0/${{ steps.set-rid.outputs.rid }}/publish/
+          shell: bash
+
+        - name: Create Release
+          uses: actions/create-release@v1
+          env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Required for creating releases
+            with:
+              tag_name: ${{ ref }}                   # Use the pushed tag as release name
+              release_name: Release ${{ ref }}
+              body: |
+                Automatic release created by GitHub Actions.
+              draft: false                         # Set to true for draft releases
+              prerelease: false                     # Set to true for pre-releases
+
+        - name: Upload Release Asset
+          uses: actions/upload-release-asset@v1
+          env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+              asset_path: ./Cyz2Json/bin/Release/net7.0/${{ steps.set-rid.outputs.rid }}/publish/
+              asset_name: cyz2json-${{ matrix.os }}.zip
+              asset_content_type: application/zip # Correct content type
+
