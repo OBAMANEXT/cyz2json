@@ -71,7 +71,7 @@ jobs:
                   repo: context.repo.repo,
                   tag: version
                 })
-                return release.data.upload_url
+                core.setOutput('upload_url', release.data.upload_url.split('{')[0])
               } catch (error) {
                 const release = await github.rest.repos.createRelease({
                   owner: context.repo.owner,
@@ -80,8 +80,9 @@ jobs:
                   name: 'Release ' + version,
                   body: reason
                 })
-                return release.data.upload_url
+                core.setOutput('upload_url', release.data.upload_url.split('{')[0])
               }
+
     
         - name: Create Release
           id: create_release
