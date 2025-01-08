@@ -1,38 +1,48 @@
 name: Build Cyz2Json
 
 on:
-  push:
-    tags:
-      - 'v*'
+    push:
+        tags:
+            - 'v*'
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+    build:
+        runs-on: ${{ matrix.os }}
+        strategy:
+          matrix:
+            os: [ubuntu-latest, windows-latest, macos-latest]
+            
+        steps:
+        - uses: actions/checkout@v3
         
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
+        - name: Setup .NET
+          uses: actions/setup-dotnet@v4
+          with:
+                dotnet-version: '8.0.x'
         
-    - name: Restore dependencies
-      run: dotnet restore
-      
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-      
-    - name: Publish
-      run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release -r ${{ matrix.rid }} --self-contained true
-      env:
-        rid: ${{ matrix.os == 'windows-latest' && 'win-x64' || matrix.os == 'ubuntu-latest' && 'linux-x64' || 'osx-x64' }}
+        - name: Restore dependencies
+          run: dotnet restore
         
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: cyz2json-${{ matrix.os }}
-        path: Cyz2Json/bin/Release/net7.0/${{ matrix.rid }}/publish/
+        - name: Build
+          run: dotnet build --configuration Release --no-restore
+        
+        - name: Set RID
+          id: set-rid
+          run: |
+            if [ "${{ matrix.os }}" == "windows-latest" ]; then
+              echo "rid=win-x64" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+              echo "rid=linux-x64" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+              echo "rid=osx-x64" >> $GITHUB_OUTPUT
+            fi
+          shell: bash
+        
+        - name: Publish
+          run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release -r ${{ steps.set-rid.outputs.rid }} --self-contained true
+                
+        - name: Upload artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: cyz2json-${{ matrix.os }}
+            path: Cyz2Json/bin/Release/net7.0/${{ steps.set-rid.outputs.rid }}/publish/
