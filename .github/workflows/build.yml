@@ -57,60 +57,46 @@ jobs:
           run: zip -r cyz2json-${{ matrix.os }}.zip ./Cyz2Json/bin/Release/net8.0/*/*/
           shell: bash
 
-        - name: Get release
-          id: get_release
-          uses: octokit/request-action@v2.x
-          with:
-            route: GET /repos/{owner}/{repo}/releases/tags/{tag}
-            owner: ${{ github.repository_owner }}
-            repo: ${{ github.event.repository.name }}
-            tag: ${{ github.event.inputs.version || github.ref_name }}
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-        - name: Create Release
-          if: steps.get_release.outputs.status == '404'  # Create if release doesn't exist
-          id: create_release
-          uses: actions/create-release@v1
-          env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Required for creating releases, Using the built-in token
+        - name: Check Release
+          id: check_release
+          uses: actions/github-script@v6
           with:
-              tag_name: ${{ github.event.inputs.version || github.ref_name }}   # Use the pushed tag as release name
-              release_name: Release ${{ github.event.inputs.version || github.ref_name }} # Use github.ref_name here as well
-              body: |
-                Automatic release created by GitHub Actions.
-              draft: false                         # Set to true for draft releases
-              prerelease: false                     # Set to true for pre-releases
-
-        - name: Update Release
-          if: steps.get_release.outputs.status == '200'  # Update if release exists
-          uses: actions/update-release@v1
-          env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-              release_id: ${{ steps.get_release.outputs.id }}
-              tag_name: ${{ github.event.inputs.version || github.ref_name }}
-              release_name: Release ${{ github.event.inputs.version || github.ref_name }}
-              body: ${{ github.event.inputs.reason }}
-              draft: false
-              prerelease: false
+            script: |
+              try {
+                const release = await github.rest.repos.getReleaseByTag({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  tag: '${{ github.event.inputs.version || github.ref_name }}'
+                });
+                return release.data.upload_url;
+              } catch (error) {
+                const release = await github.rest.repos.createRelease({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  tag_name: '${{ github.event.inputs.version || github.ref_name }}',
+                  name: 'Release ${{ github.event.inputs.version || github.ref_name }}',
+                  body: '${{ github.event.inputs.reason }}'
+                });
+                return release.data.upload_url;
+              }
+              - name: Create Release
+              id: create_release
+              if: steps.check_release.outputs.result == ''
+              uses: actions/create-release@v1
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                tag_name: ${{ github.event.inputs.version || github.ref_name }}
+                release_name: Release ${{ github.event.inputs.version || github.ref_name }}
+                body: ${{ github.event.inputs.reason }}
     
-        - name: Upload Release Asset # Upload regardless of create/update
+        - name: Upload Release Asset
           uses: actions/upload-release-asset@v1
           env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
-              upload_url: ${{ steps.create_release.outputs.upload_url  || steps.update_release.outputs.upload_url }}
-              asset_path: cyz2json-${{ matrix.os }}.zip    # Path to the ZIP file
-              asset_name: cyz2json-${{ matrix.os }}.zip    # Name of the asset on the release page
-              asset_content_type: application/zip # Correct content type
-
-        # - name: Upload Release
-        #   uses: softprops/action-gh-release@v1
-        #   with:
-        #     files: cyz2json-${{ matrix.os }}.zip
-        #     tag_name: ${{ github.event.inputs.version || github.ref_name }}
-        #     name: Release ${{ github.event.inputs.version || github.ref_name }}
-        #     body: ${{ github.event.inputs.reason }}
-        #   env:
-        #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                upload_url: ${{ steps.check_release.outputs.result || steps.create_release.outputs.upload_url }}
+                asset_path: cyz2json-${{ matrix.os }}.zip
+                asset_name: cyz2json-${{ matrix.os }}.zip
+                asset_content_type: application/zip
