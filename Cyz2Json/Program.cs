@@ -313,7 +313,8 @@ namespace Cyz2Json
         {
             var measurementResults = new Dictionary<string, object>();
 
-            measurementResults["start"] = dfw.MeasurementInfo.MeasurementStart;
+            if ( dfw.MeasurementInfo.MeasurementStart)
+                measurementResults["start"] = dfw.MeasurementInfo.MeasurementStart;
 
             // measurementResults["duration"] = dfw.MeasurementInfo.ActualMeasureTime; // Robert Blackwell line
             measurementResults["maximum_measurement_time_s"] = dfw.MeasurementInfo.ActualMeasureTime; // VELIZ line
@@ -346,16 +347,18 @@ namespace Cyz2Json
 
                 using (MemoryStream memoryStream = new MemoryStream())
                 {
-                    particle.ImageHandling.ImageStream.Position = 0;
-                    particle.ImageHandling.ImageStream.CopyTo(memoryStream);
+                    if (particle.ImageHandling?.ImageStream != null)
+                    {
+                        particle.ImageHandling.ImageStream.Position = 0;
+                        particle.ImageHandling.ImageStream.CopyTo(memoryStream);
+                        base64String = System.Convert.ToBase64String(memoryStream.ToArray());
+                        image["particleId"] = particle.ID;
+                        image["base64"] = base64String;
+
+                        images.Add(image);
+                    }
                     
-                    base64String = System.Convert.ToBase64String(memoryStream.ToArray());
-
                 }
-                image["particleId"] = particle.ID;
-                image["base64"] = base64String;
-
-                images.Add(image);
             }
             return images;
         }
