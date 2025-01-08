@@ -53,8 +53,8 @@ jobs:
           env:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Required for creating releases
           with:
-              tag_name: ${{ ref }}                   # Use the pushed tag as release name
-              release_name: Release ${{ ref }}
+              tag_name: ${{ github.ref_name }}   # Use the pushed tag as release name
+              release_name: Release ${{ github.ref_name }} # Use github.ref_name here as well
               body: |
                 Automatic release created by GitHub Actions.
               draft: false                         # Set to true for draft releases
@@ -66,7 +66,7 @@ jobs:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
               upload_url: ${{ steps.create_release.outputs.upload_url }}
-              asset_path: ./Cyz2Json/bin/Release/net7.0/${{ steps.set-rid.outputs.rid }}/publish/
-              asset_name: cyz2json-${{ matrix.os }}.zip
+              asset_path: cyz2json-${{ matrix.os }}.zip    # Path to the ZIP file
+              asset_name: cyz2json-${{ matrix.os }}.zip    # Name of the asset on the release page
               asset_content_type: application/zip # Correct content type
 
