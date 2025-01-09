@@ -49,6 +49,14 @@ On Windows
 Cyz2Json.EXE input.cyz --output output.json
 #+end_src
 
+On MacOSX
+
+xattr -d com.apple.quarantine ./cyz2json-macos-latest/*
+#+begin_src bash
+dotnet bin/Cyz2Json.dll input.cyz --output output.json
+Cyz2Json.exe input.cyz --output output.json
+#+end_src
+
 * Bulk file conversion
 
 We often find ourselves needing to undertake a bulk conversion of a
@@ -132,3 +140,5 @@ Research and Innovation. Views and opinions expressed are however
 those of the authors only and do not necessarily reflect those of the
 European Union or UK Research and Innovation. Neither the European
 Union nor the granting authority can be held responsible for them.
+
+
