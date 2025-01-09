@@ -48,7 +48,8 @@ jobs:
           shell: bash
         
         - name: Publish
-          run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release --self-contained true
+          run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=true
+
                 
         - name: Copy License File
           if: matrix.os == 'windows-latest'
