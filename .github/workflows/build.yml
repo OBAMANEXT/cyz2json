@@ -67,7 +67,8 @@ jobs:
 
         - name: Zip Release Files
           if: matrix.os != 'windows-latest'
-          run: zip -r cyz2json-${{ matrix.os }}.zip ./Cyz2Json/bin/Release/net8.0/*/*/
+          # run: zip -r cyz2json-${{ matrix.os }}.zip ./Cyz2Json/bin/Release/net8.0/*/*/
+          run: cd Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish && zip -r ../../../../../../../cyz2json-${{ matrix.os }}.zip ./*
           shell: bash
 
 
@@ -113,7 +114,8 @@ jobs:
           env:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
-              upload_url: ${{ steps.check_release.outputs.upload_url }}?name=cyz2json-${{ matrix.os }}.zip
+              upload_url: ${{ steps.check_release.outputs.upload_url }}?name=cyz2json-${{ matrix.os }}.zip # put in Download/vx.x.x
+              # upload_url: ${{ format('{0}/latest/assets{1}', github.api_url, '?name=cyz2json-') }}${{ matrix.os }}.zip # put in Download/latest
               asset_path: cyz2json-${{ matrix.os }}.zip
               asset_name: cyz2json-${{ matrix.os }}.zip
               asset_content_type: application/zip
