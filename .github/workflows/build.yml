@@ -43,7 +43,7 @@ jobs:
             elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
               echo "rid=linux-x64" >> $GITHUB_OUTPUT
             elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-              echo "rid=osx-x64" >> $GITHUB_OUTPUT
+              echo "rid=osx-arm64" >> $GITHUB_OUTPUT
             fi
           shell: bash
         
