@@ -14,8 +14,25 @@ including Python and R. We therefore convert to JSON.
 This program uses the [[https://github.com/Cytobuoy/CyzFile-API][CytoBuoy CyzFile API]] and targets the Microsoft
 .NET 8 framework on Windows, macOS or Linux.
 
-* Installation
+* Build instructions
 
+** Build with Docker
+Only build cyz2json for Linux
+
+First build a container to build the program:
+#+begin_src
+docker build -t cyz2json-builder .     
+#+end_src
+
+Then run the container to build the cyz2json tool:
+#+begin_src
+docker run -v $(pwd):/src cyz2json-builder bash -c "dotnet publish -c Release --self-contained true -r linux-x64"     
+#+end_src
+
+
+** Build on the PC
+
+** Installation
 The first step is to install the Microsoft dotnet runtime version 8.
 Microsoft provides detailed instructions at
 https://learn.microsoft.com/en-us/dotnet/core/install/.
@@ -35,6 +52,7 @@ dotnet --info
 The =Cyz2Json= program can then be compiled by cloning the project
 from GitHub and typing =dotnet build -o bin=.
 
+
 * Running the program
 
 The program can be run, on Linux, for example, as follows:
@@ -51,11 +69,21 @@ Cyz2Json.EXE input.cyz --output output.json
 
 On MacOSX
 
+bypass security with xattr command
+#+begin_src bash
 xattr -d com.apple.quarantine ./cyz2json-macos-latest/*
+#+end_src
+
+2 methods to run
 #+begin_src bash
 dotnet bin/Cyz2Json.dll input.cyz --output output.json
+#+end_src
+or
+#+begin_src bash
 Cyz2Json.exe input.cyz --output output.json
 #+end_src
+
+
 
 * Bulk file conversion
 
