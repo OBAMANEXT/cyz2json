@@ -13,7 +13,7 @@ using CytoSense.Data.ParticleHandling.Channel;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.CommandLine;
-using OpenCvSharp;
+// using OpenCvSharp;
 using System.Reflection;
 
 
@@ -130,7 +130,7 @@ namespace Cyz2Json
             data["instrument"] = LoadInstrument(dfw, metadatagreedy);
             data["particles"] = LoadParticles(dfw, isRaw);
             data["images"] = LoadImages(dfw);
-            data["crop_images"] = LoadCropImages(dfw);
+            // data["crop_images"] = LoadCropImages(dfw);
 
             return data;
         }
@@ -363,43 +363,43 @@ namespace Cyz2Json
             return images;
         }
 
-        private static List<Dictionary<string, object>> LoadCropImages(DataFileWrapper dfw)
-        {
-            var crop_images = new List<Dictionary<string, object>>();
+        // private static List<Dictionary<string, object>> LoadCropImages(DataFileWrapper dfw)
+        // {
+        //     var crop_images = new List<Dictionary<string, object>>();
 
-            foreach (var particle in dfw.SplittedParticlesWithImages)
-            {
-                var crop_image = new Dictionary<string, object>();
+        //     foreach (var particle in dfw.SplittedParticlesWithImages)
+        //     {
+        //         var crop_image = new Dictionary<string, object>();
 
-                string base64String = string.Empty;
+        //         string base64String = string.Empty;
 
-                var crpImg = particle.ImageHandling.GetCroppedImage(25, 1.1, 7, 1);
+        //         var crpImg = particle.ImageHandling.GetCroppedImage(25, 1.1, 7, 1);
                 
-                if (particle.ImageHandling.CropResult == CytoImage.CropResultEnum.CropOK)
-                { 
-                    // Create a byte array to store the encoded image
-                    byte[] encodedImage;
+        //         if (particle.ImageHandling.CropResult == CytoImage.CropResultEnum.CropOK)
+        //         { 
+        //             // Create a byte array to store the encoded image
+        //             byte[] encodedImage;
 
-                    // Encode the cropped image as JPG and store the result in the byte array
-                    Cv2.ImEncode(".jpg", crpImg, out encodedImage);
+        //             // Encode the cropped image as JPG and store the result in the byte array
+        //             Cv2.ImEncode(".jpg", crpImg, out encodedImage);
 
-                    // Convert the byte array to Base64 string
-                    base64String = System.Convert.ToBase64String(encodedImage);
+        //             // Convert the byte array to Base64 string
+        //             base64String = System.Convert.ToBase64String(encodedImage);
 
-                }
-                else // there was a problem cropping the image, examine the result enum to see what the problem was.
-                {
-                    Console.WriteLine($"{particle.ID}: Cropping failed ('{particle.ImageHandling.CropResult}')");
-                }
+        //         }
+        //         else // there was a problem cropping the image, examine the result enum to see what the problem was.
+        //         {
+        //             Console.WriteLine($"{particle.ID}: Cropping failed ('{particle.ImageHandling.CropResult}')");
+        //         }
 
 
-                crop_image["particleId"] = particle.ID;
-                crop_image["base64"] = base64String;
+        //         crop_image["particleId"] = particle.ID;
+        //         crop_image["base64"] = base64String;
 
-                crop_images.Add(crop_image);
-            }
-            return crop_images;
-        }
+        //         crop_images.Add(crop_image);
+        //     }
+        //     return crop_images;
+        // }
 
         public class IgnoreErrorPropertiesResolver : DefaultContractResolver
         {
