@@ -68,6 +68,13 @@ The program can be run, on Linux, for example, as follows:
 dotnet bin/Cyz2Json.dll input.cyz --output output.json
 #+end_src
 
+Running with executable loaded from github
+#+begin_src bash
+export cyzversion=v0.0.49
+rm -rf cyz2json/* && curl -L -o cyz2json/cyz2json.zip https://github.com/ecotaxa/cyz2json/releases/download/$cyzversion/cyz2json-ubuntu-latest.zip && pushd cyz2json && unzip cyz2json.zip && popd && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:. && cyz2json/Cyz2Json ./Deployment\ 1\ 2024-07-18\ 21h12.cyz --metadatagreedy=false --output ./Deployment\ 1\ 2024-07-18\ 21h12.json
+#+end_src
+
+
 On Windows
 
 #+begin_src bash
