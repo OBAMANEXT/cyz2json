@@ -1,0 +1,8 @@
+bin/
+obj/
+.vs/
+.git/
+*.user
+*.suo
+*.DS_Store
+# Any other specific files or folders to exclude.  Double check for symbolic links
