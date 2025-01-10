@@ -52,6 +52,13 @@ dotnet --info
 The =Cyz2Json= program can then be compiled by cloning the project
 from GitHub and typing =dotnet build -o bin=.
 
+** Build with GitHub actions
+just need to add new tag
+#+begin_src bash
+git tag v0.0.47
+git push origin v0.0.47
+#+end_src
+
 
 * Running the program
 
