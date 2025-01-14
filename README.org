@@ -16,6 +16,20 @@ This program uses the [[https://github.com/Cytobuoy/CyzFile-API][CytoBuoy CyzFil
 
 * Build instructions
 
+## Build with GitHub actions
+
+Commit your code and push it to GitHub.
+then add a tag to the commit and push it to GitHub. like the sample below
+```bash
+git tag v0.0.50 && git push origin v0.0.50
+```
+the action will build the binary and push it to the release
+
+You will find result in : https://github.com/ecotaxa/cyz2json/actions
+and release in : https://github.com/ecotaxa/cyz2json/releases
+
+
+
 ** Build with Docker
 Only build cyz2json for Linux
 
@@ -141,6 +155,22 @@ json_data <- fromJSON("pond.json")
 print(json_data)
 
 #+end_src
+
+# Installation
+## from Release
+
+Download the release for you platfrom, and unpack on your folder choice.
+
+### On MacOSX
+You will need to bypass security 
+You have 2 possibilities :
+using xattr command.
+for exmaple:
+```
+xattr -d com.apple.quarantine  /opt/cytosense_to_ecotaxa_pipeline/bin/*
+```
+or if you do not want use xattr you need to go in Systems Settings > Security & Privacy > General and allow the app to be opened for the 10+ libraries. You need to relauch sevaral time the cyz2json binary to acheive all neccessary permissions.
+
 
 * Notes
 
