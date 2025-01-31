@@ -1,5 +1,7 @@
 #+TITLE: Cyz2Json - Convert flow cytometry CYZ files to JSON format.
 
+#+HTML: <img src="https://github.com/ecotaxa/cyz2json/actions/workflows/build.yml/badge.svg" alt="Build Cyz2Json"/>
+
 * Introduction
 
 This program converts flow cytometry data stored in a CytoBuoy CYZ
@@ -12,8 +14,39 @@ including Python and R. We therefore convert to JSON.
 This program uses the [[https://github.com/Cytobuoy/CyzFile-API][CytoBuoy CyzFile API]] and targets the Microsoft
 .NET 8 framework on Windows, macOS or Linux.
 
-* Installation
+* Build instructions
 
+** Build with GitHub actions
+
+Commit your code and push it to GitHub.
+then add a tag to the commit and push it to GitHub. like the sample below
+#+begin_src
+git tag v0.0.50 && git push origin v0.0.50
+#+end_src
+the action will build the binary and push it to the release
+
+You will find result in : https://github.com/ecotaxa/cyz2json/actions
+and release in : https://github.com/ecotaxa/cyz2json/releases
+
+
+
+** Build with Docker
+Only build cyz2json for Linux
+
+First build a container to build the program:
+#+begin_src
+docker build -t cyz2json-builder .     
+#+end_src
+
+Then run the container to build the cyz2json tool:
+#+begin_src
+docker run -v $(pwd):/src cyz2json-builder bash -c "dotnet publish -c Release --self-contained true -r linux-x64"     
+#+end_src
+
+
+** Build on the PC
+
+** Installation
 The first step is to install the Microsoft dotnet runtime version 8.
 Microsoft provides detailed instructions at
 https://learn.microsoft.com/en-us/dotnet/core/install/.
@@ -33,6 +66,8 @@ dotnet --info
 The =Cyz2Json= program can then be compiled by cloning the project
 from GitHub and typing =dotnet build -o bin=.
 
+
+
 * Running the program
 
 The program can be run, on Linux, for example, as follows:
@@ -41,11 +76,36 @@ The program can be run, on Linux, for example, as follows:
 dotnet bin/Cyz2Json.dll input.cyz --output output.json
 #+end_src
 
+Running with executable loaded from github
+#+begin_src bash
+export cyzversion=v0.0.49
+rm -rf cyz2json/* && curl -L -o cyz2json/cyz2json.zip https://github.com/ecotaxa/cyz2json/releases/download/$cyzversion/cyz2json-ubuntu-latest.zip && pushd cyz2json && unzip cyz2json.zip && popd && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:. && cyz2json/Cyz2Json ./Deployment\ 1\ 2024-07-18\ 21h12.cyz --metadatagreedy=false --output ./Deployment\ 1\ 2024-07-18\ 21h12.json
+#+end_src
+
+
 On Windows
 
 #+begin_src bash
 Cyz2Json.EXE input.cyz --output output.json
 #+end_src
+
+On MacOSX
+
+bypass security with xattr command
+#+begin_src bash
+xattr -d com.apple.quarantine ./cyz2json-macos-latest/*
+#+end_src
+
+2 methods to run
+#+begin_src bash
+dotnet bin/Cyz2Json.dll input.cyz --output output.json
+#+end_src
+or
+#+begin_src bash
+Cyz2Json.exe input.cyz --output output.json
+#+end_src
+
+
 
 * Bulk file conversion
 
@@ -90,6 +150,22 @@ print(json_data)
 
 #+end_src
 
+# Installation
+## from Release
+
+Download the release for you platfrom, and unpack on your folder choice.
+
+### On MacOSX
+You will need to bypass security 
+You have 2 possibilities :
+using xattr command.
+for exmaple:
+```
+xattr -d com.apple.quarantine  /opt/cytosense_to_ecotaxa_pipeline/bin/*
+```
+or if you do not want use xattr you need to go in Systems Settings > Security & Privacy > General and allow the app to be opened for the 10+ libraries. You need to relauch sevaral time the cyz2json binary to acheive all neccessary permissions.
+
+
 * Notes
 
 If a CYZ file contains images, we currently base64 encode them and
@@ -130,3 +206,5 @@ Research and Innovation. Views and opinions expressed are however
 those of the authors only and do not necessarily reflect those of the
 European Union or UK Research and Innovation. Neither the European
 Union nor the granting authority can be held responsible for them.
+
+
