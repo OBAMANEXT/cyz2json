@@ -63,10 +63,14 @@ You can test that =dotnet= is installed on your system by typing:
 dotnet --info
 #+end_src
 
+To generate the version number, you will need to install the =nbgv= tool.
+You can install this tool by typing:
+=dotnet tool install -g nbgv=
+
+
 The =Cyz2Json= program can then be compiled by cloning the project
 from GitHub and typing =dotnet build -o bin=.
-
-
+The version is based on the git tag.
 
 * Running the program
 
@@ -177,6 +181,16 @@ JPEG images.
 Note that the images are un-cropped. This is an expedience to allow
 cross platform operation (The CyzFile-API only supports cropping on
 Windows platforms).
+
+Cyz2json is using a dll from the CyzFile-API.[https://github.com/Cytobuoy/CyzFile-API]
+At this moment, using version 1.1.4.1 
+To update:
++ download the net7.0 realease from https://github.com/Cytobuoy/CyzFile-API/releases
++ unzip the downloaded file
++ copy the files from the dll folder to the CyzFile-v1.1.4.1-net7.0 folder
++ rename the folder to the appropriate version
++ rebuild the project.
+
 
 * Acknowledgements
 

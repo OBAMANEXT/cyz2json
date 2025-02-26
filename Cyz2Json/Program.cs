@@ -45,6 +45,14 @@ namespace Cyz2Json
     internal class Program
     {
 
+
+        static void HandleVersion()
+        {
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            var informationalVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            Console.WriteLine($"Cyz2Json version {informationalVersion ?? version?.ToString()}");
+        }
+
         static void Main(string[] args)
         {
             var inputArgument = new Argument<FileInfo>(
@@ -64,15 +72,34 @@ namespace Cyz2Json
                 description: "Save all possible measurement settings with your file (default: true)",
                 getDefaultValue: () => true);
 
+            var versionOption = new Option<bool>(
+                name: "-V",
+                // new[] { "-V", "--version" },
+                description: "Display version information");
+
             var rootCommand = new RootCommand("Convert CYZ files to JSON")
             {
-                inputArgument, outputOption, rawOption, metadatagreedyOption
+                inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption
             };
 
-            rootCommand.SetHandler(Convert, inputArgument, outputOption, rawOption, metadatagreedyOption);
+            // rootCommand.SetHandler(Convert, inputArgument, outputOption, rawOption, metadatagreedyOption);
+            rootCommand.SetHandler((FileInfo input, FileInfo output, bool raw, bool metadatagreedy, bool version) =>
 
+
+            {
+                if (version)
+                {
+                    HandleVersion();
+                    return;
+                }
+                Convert(input, output, raw, metadatagreedy);
+            }, inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption);
+
+            rootCommand.TreatUnmatchedTokensAsErrors = false;
             rootCommand.Invoke(args);
         }
+
+
         /// <summary>
         /// Convert the flow cytometry data in the file designated by cyzFilename to Javscript Object Notation (JSON).
         /// If jsonFilename is null, echo the JSON to the console, otherwise store it a file designated by jsonFilename.
