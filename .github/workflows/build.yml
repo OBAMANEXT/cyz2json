@@ -14,6 +14,8 @@ on:
           description: 'Reason for manual trigger'
           required: false
           default: 'Manual run'
+permissions:
+  contents: write
 jobs:
     build:
         runs-on: ${{ matrix.os }}
