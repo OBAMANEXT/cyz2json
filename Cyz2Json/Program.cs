@@ -77,13 +77,30 @@ namespace Cyz2Json
                 // new[] { "-V", "--version" },
                 description: "Display version information");
 
+
+            var regionInformationOption = new Option<bool>(
+                name: "--region-information",
+                description: "Export region information for imaging"
+            );
+
+            var regionDefinitionOverride = new Option<FileInfo>(
+                name: "--region-definition",
+                description: "File with region definitions, overrides the definitions stored in the file (if any)."
+            ).ExistingOnly();
+            regionDefinitionOverride.AddValidator( result  => { 
+                if ( ! result.GetValueForOption(regionInformationOption) ) {
+                    result.ErrorMessage = "Specifying a region information file is only useful when exporting region information.";
+                }
+            });
+
+
             var rootCommand = new RootCommand("Convert CYZ files to JSON")
             {
-                inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption
+                inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption, regionInformationOption, regionDefinitionOverride
             };
 
             // rootCommand.SetHandler(Convert, inputArgument, outputOption, rawOption, metadatagreedyOption);
-            rootCommand.SetHandler((FileInfo input, FileInfo output, bool raw, bool metadatagreedy, bool version) =>
+            rootCommand.SetHandler((FileInfo input, FileInfo output, bool raw, bool metadatagreedy, bool version, bool regionInformation, FileInfo regionDefinitionFile) =>
 
 
             {
@@ -92,8 +109,8 @@ namespace Cyz2Json
                     HandleVersion();
                     return;
                 }
-                Convert(input, output, raw, metadatagreedy);
-            }, inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption);
+                Convert(input, output, raw, metadatagreedy, regionInformation, regionDefinitionFile);
+            }, inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption, regionInformationOption, regionDefinitionOverride);
 
             rootCommand.TreatUnmatchedTokensAsErrors = false;
             rootCommand.Invoke(args);
@@ -104,9 +121,9 @@ namespace Cyz2Json
         /// Convert the flow cytometry data in the file designated by cyzFilename to Javscript Object Notation (JSON).
         /// If jsonFilename is null, echo the JSON to the console, otherwise store it a file designated by jsonFilename.
         /// </summary>
-        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw, bool metadatagreedy)
+        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw, bool metadatagreedy, bool regionInformation, FileInfo regionDefinitionFile)
         {
-            var data = LoadData(cyzFilename.FullName, isRaw, metadatagreedy);
+            var data = LoadData(cyzFilename.FullName, isRaw, metadatagreedy, regionInformation, regionDefinitionFile);
 
             StreamWriter streamWriter;
 
@@ -128,7 +145,7 @@ namespace Cyz2Json
         /// <summary>
         /// Load all the flow cytometry data from the CYZ file designated by pathname.
         /// </summary>
-        private static Dictionary<string, object> LoadData(string pathname, bool isRaw, bool metadatagreedy)
+        private static Dictionary<string, object> LoadData(string pathname, bool isRaw, bool metadatagreedy, bool regionInformation, FileInfo regionDefinitionFile)
         {
             var data = new Dictionary<string, object>();
 
@@ -155,12 +172,18 @@ namespace Cyz2Json
                 dfw.ConcentrationMode = ConcentrationModeEnum.Pre_measurement_FTDI;
             }
             data["instrument"] = LoadInstrument(dfw, metadatagreedy);
+
+            if (regionInformation) {
+                data["region_information"] = RegionInformation.LoadRegionInformation(dfw, regionDefinitionFile);
+            }
+
             data["particles"] = LoadParticles(dfw, isRaw);
             data["images"] = LoadImages(dfw);
             // data["crop_images"] = LoadCropImages(dfw);
 
             return data;
         }
+
 
         private static Dictionary<string, object> LoadInstrument(DataFileWrapper dfw, bool metadatagreedy)
         {
