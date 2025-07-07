@@ -122,8 +122,9 @@ namespace Cyz2Json
                 // In CytoClus we filter all unused sets when importing them into our workspace. But in this case simply importing all sets
                 // will not be a problem.
                 return SetsList.XmlDeSerializeString(dfw.CytoSettings, mSettings.IIFSetDefintionXml);
-            }
-            else {
+            } else if (mSettings.IIFuseTargetAll) {  // We target all images, so create a default set definition, with only the default set.
+                return new SetsList(dfw.CytoSettings.SerialNumber);
+            } else {
                 throw new Exception("No region information is provided in the file, please provide a region definition file if you want to export region information");
             }
         }
