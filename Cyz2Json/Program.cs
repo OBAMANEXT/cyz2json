@@ -15,6 +15,7 @@ using Newtonsoft.Json.Serialization;
 using System.CommandLine;
 // using OpenCvSharp;
 using System.Reflection;
+using CytoSense.Data.Analysis;
 
 
 // Design decisions:
@@ -173,11 +174,14 @@ namespace Cyz2Json
             }
             data["instrument"] = LoadInstrument(dfw, metadatagreedy);
 
+            RegionInformation regInfo;
+            SetsList ? sets = null;
             if (regionInformation) {
-                data["region_information"] = RegionInformation.LoadRegionInformation(dfw, regionDefinitionFile);
+                (regInfo, sets) = RegionInformation.LoadRegionInformation(dfw, regionDefinitionFile);
+                data["region_information"] = regInfo;
             }
 
-            data["particles"] = LoadParticles(dfw, isRaw);
+            data["particles"] = LoadParticles(dfw, isRaw, sets);
             data["images"] = LoadImages(dfw);
             // data["crop_images"] = LoadCropImages(dfw);
 
@@ -272,23 +276,27 @@ namespace Cyz2Json
         }
 
 
-        private static List<Dictionary<string, object>> LoadParticles(DataFileWrapper dfw, bool isRaw)
+        private static List<Dictionary<string, object>> LoadParticles(DataFileWrapper dfw, bool isRaw, SetsList ? sets)
         {
             var particles = new List<Dictionary<string, object>>();
 
             foreach (var particle in dfw.SplittedParticles)
-                particles.Add(LoadParticle(particle, isRaw));
+                particles.Add(LoadParticle(particle, isRaw, RegionInformation.LoadRegions(particle, sets)));
 
             return particles;
         }
 
-        private static Dictionary<string, object> LoadParticle(Particle particle, bool isRaw)
+        private static Dictionary<string, object> LoadParticle(Particle particle, bool isRaw, List<string> ? particleRegions)
         {
 
             var particleData = new Dictionary<string, object>();
 
             particleData["particleId"] = particle.ID;
             particleData["hasImage"] = particle.hasImage;
+
+            if (particleRegions != null) {
+                particleData["region"] = particleRegions;
+            }
 
             // Pulse shapes
 

@@ -1,4 +1,5 @@
 ﻿using CytoSense.Data;
+using CytoSense.Data.ParticleHandling;
 using CytoSense.Data.Analysis;
 using CytoSense.Serializing;
 using System.Xml;
@@ -31,7 +32,7 @@ namespace Cyz2Json
         /// <param name="dfw"></param>
         /// <param name="regionDefinitionFile"></param>
         /// <returns></returns>
-        public static RegionInformation LoadRegionInformation( DataFileWrapper dfw, FileInfo regionDefinitionFile)
+        public static (RegionInformation, SetsList) LoadRegionInformation( DataFileWrapper dfw, FileInfo regionDefinitionFile)
         {
             SetsList sets = (regionDefinitionFile != null)?LoadSetsFromFile(dfw, regionDefinitionFile):LoadSetsFromDfw(dfw);
             
@@ -49,10 +50,41 @@ namespace Cyz2Json
             }
 
 
-            return new RegionInformation(){ 
+            return (new RegionInformation(){ 
                 definition = XmlSerialize(sets, dfw.CytoSettings.machineConfigurationRelease.ReleaseDate),
                 statistics = stats
-            };
+            }, sets);
+        }
+
+
+        /// <summary>
+        /// Check which region(s) or sets the particle is in, if any.  And return a list of set names
+        /// that the particle is in.  This can be an empty list if the particle is not in any
+        /// set. 
+        /// 
+        /// NOTE: If a null SetsList is passed, then there is no set definition then a null 
+        /// list is returned instead of an empty list.
+        /// </summary>
+        /// <param name="p">The particle to ceck.</param>
+        /// <param name="sets">The list of regions/sets to check, or null if there is nothing to check.</param>
+        /// <returns>If a sets list is passed then a list with the names of the sets that the particle is in, which 
+        /// can be empty. If the sets parameter is empty then a null will be returned to indicate that there is
+        /// no set information</returns>
+        public static List<string> ? LoadRegions(Particle p, SetsList ? sets)
+        {
+            if (sets == null)
+                return null;
+
+            var res = new List<string>();
+            foreach( var s in sets ) {
+                if (s.ListID == 0) 
+                    continue; // The default set, every particle is in, so we skip that.
+
+                if (Array.BinarySearch(s.ParticleIndices,p.Index) >= 0) {
+                    res.Add(s.Name);
+                } // Else not found, particle is not not in this set.
+            }
+            return res;
         }
 
         /// <summary>
