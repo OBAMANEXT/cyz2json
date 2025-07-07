@@ -4,9 +4,6 @@ using CytoSense.Data.Analysis;
 using CytoSense.Serializing;
 using System.Xml;
 using CytoSense.MeasurementSettings;
-using System.Runtime;
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Cyz2Json
 {
@@ -16,13 +13,13 @@ namespace Cyz2Json
     /// </summary>
     /// <remarks>I decided to put it into a separate file, to keep my changes apart from other work, and
     /// to keep the main program manageable. </remarks>
-    internal class RegionInformation
+    internal class SetInformation
     {
-        internal record class RegionStatistics(string name="", int count=0, int images=0);
+        internal record class SetStatistics(string name="", int count=0, int images=0);
 
 
         public string definition;
-        public List<RegionStatistics> statistics;
+        public List<SetStatistics> statistics;
 
         /// <summary>
         /// Load set definitions from either specified file, or from the datafile wrapper, and calculate
@@ -30,27 +27,31 @@ namespace Cyz2Json
         /// but I put it in a separate function to make it clear how much work it is to calculate all this.
         /// </summary>
         /// <param name="dfw"></param>
-        /// <param name="regionDefinitionFile"></param>
+        /// <param name="setDefinitionFile"></param>
         /// <returns></returns>
-        public static (RegionInformation, SetsList) LoadRegionInformation( DataFileWrapper dfw, FileInfo regionDefinitionFile)
+        public static (SetInformation, SetsList) LoadImagingSetInformation( DataFileWrapper dfw, FileInfo setDefinitionFile)
         {
-            SetsList sets = (regionDefinitionFile != null)?LoadSetsFromFile(dfw, regionDefinitionFile):LoadSetsFromDfw(dfw);
+            if (!dfw.MeasurementSettings.IIFCheck) {
+                throw new Exception("Imaging was not used in the datafile, so we cannot export imaging set information!");
+            }
+
+            SetsList sets = (setDefinitionFile != null)?LoadSetsFromFile(dfw, setDefinitionFile):LoadSetsFromDfw(dfw);
             
             sets = sets.Clone(dfw); // Get a copy of the sets that are applied to our specific datafile. We do not need to old one, so we reuse the variable.
 
 
             RecalculateParticleIndices(dfw, sets); // NOTE: Verify this is need after loading a new file?
 
-            var stats = new List<RegionStatistics>();
+            var stats = new List<SetStatistics>();
             foreach( var set in sets) {
                 var name = set.Name;
                 var count = set.ParticleIndices.Length; 
                 int images = set.Particles.Where( (p)=> p.hasImage).Count();
-                stats.Add( new RegionStatistics(name, count, images) );
+                stats.Add( new SetStatistics(name, count, images) );
             }
 
 
-            return (new RegionInformation(){ 
+            return (new SetInformation(){ 
                 definition = XmlSerialize(sets, dfw.CytoSettings.machineConfigurationRelease.ReleaseDate),
                 statistics = stats
             }, sets);
@@ -58,19 +59,19 @@ namespace Cyz2Json
 
 
         /// <summary>
-        /// Check which region(s) or sets the particle is in, if any.  And return a list of set names
+        /// Check which sets the particle is in, if any.  And return a list of set names
         /// that the particle is in.  This can be an empty list if the particle is not in any
         /// set. 
         /// 
         /// NOTE: If a null SetsList is passed, then there is no set definition then a null 
         /// list is returned instead of an empty list.
         /// </summary>
-        /// <param name="p">The particle to ceck.</param>
+        /// <param name="p">The particle to check.</param>
         /// <param name="sets">The list of regions/sets to check, or null if there is nothing to check.</param>
         /// <returns>If a sets list is passed then a list with the names of the sets that the particle is in, which 
         /// can be empty. If the sets parameter is empty then a null will be returned to indicate that there is
         /// no set information</returns>
-        public static List<string> ? LoadRegions(Particle p, SetsList ? sets)
+        public static List<string> ? LoadSetNames(Particle p, SetsList ? sets)
         {
             if (sets == null)
                 return null;
@@ -88,13 +89,13 @@ namespace Cyz2Json
         }
 
         /// <summary>
-        /// Process all particles and sets to findout where they belong.  The exclusive sets mode is a bit tricky,
-        /// a particle can only belong to one set, even it would match other sets as well. (Only for GateBases sets).
+        /// Process all particles and sets to find out where they belong.  The exclusive sets mode is a bit tricky,
+        /// a particle can only belong to one set, even it would match other sets as well. (Only for GateBased sets).
         /// To do this we must process the sets starting from the top, and once a particle has been assigned it is no
         /// longer available for other sets.
         /// </summary>
-        /// <param name="dfw"></param>
-        /// <param name="sets"></param>
+        /// <param name="dfw">The data file with all the particles.</param>
+        /// <param name="sets">The sets that should be recalculated.</param>
         private static void RecalculateParticleIndices(DataFileWrapper dfw, SetsList sets)
         {
             //  update gatebased sets without taking into account exclusive set mode
@@ -134,8 +135,11 @@ namespace Cyz2Json
 
         private static SetsList LoadSetsFromFile(DataFileWrapper dfw, FileInfo regionDefinitionFile)
         {
-            if (regionDefinitionFile.Extension == ".iif") {
+            if( dfw.MeasurementSettings.IIFuseSmartGrid ) {
+                throw new Exception("Imaging set information exports are not valid  in combination with 'SmartGrid' imaging.");
+            }
 
+            if (regionDefinitionFile.Extension == ".iif") {
                 var iifParams = Serializing.loadFromFile<IIFParameters>(regionDefinitionFile.FullName);
                 return ConvertIifParametersToSetsList(dfw, iifParams);
             } else if (regionDefinitionFile.Extension == ".xml") {
@@ -156,8 +160,10 @@ namespace Cyz2Json
                 return SetsList.XmlDeSerializeString(dfw.CytoSettings, mSettings.IIFSetDefintionXml);
             } else if (mSettings.IIFuseTargetAll) {  // We target all images, so create a default set definition, with only the default set.
                 return new SetsList(dfw.CytoSettings.SerialNumber);
+            } else if( mSettings.IIFuseSmartGrid ) {
+                throw new Exception("Imaging set information exports are not valid  in combination with 'SmartGrid' imaging.");
             } else {
-                throw new Exception("No region information is provided in the file, please provide a region definition file if you want to export region information");
+                throw new Exception("Internal error, unhandled imaging option.");
             }
         }
 
@@ -194,9 +200,10 @@ namespace Cyz2Json
         }
 
 
-        private RegionInformation()
+        private SetInformation()
         {
             definition = "";
+            statistics = new List<SetStatistics>();
         }
 
     }

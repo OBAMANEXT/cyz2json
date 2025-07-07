@@ -79,17 +79,18 @@ namespace Cyz2Json
                 description: "Display version information");
 
 
-            var regionInformationOption = new Option<bool>(
-                name: "--region-information",
-                description: "Export region information for imaging"
+            var setInformationOption = new Option<bool>(
+                name: "--imaging-set-information",
+                description: "Export set information for imaging"
             );
 
-            var regionDefinitionOverride = new Option<FileInfo>(
-                name: "--region-definition",
-                description: "File with region definitions, overrides the definitions stored in the file (if any)."
+            var setDefinitionOverride = new Option<FileInfo>(
+                name: "--imaging-set-definition",
+                description: "File with set definitions, overrides the definitions stored in the file."
             ).ExistingOnly();
-            regionDefinitionOverride.AddValidator( result  => { 
-                if ( ! result.GetValueForOption(regionInformationOption) ) {
+
+            setDefinitionOverride.AddValidator( result  => { 
+                if ( ! result.GetValueForOption(setInformationOption) ) {
                     result.ErrorMessage = "Specifying a region information file is only useful when exporting region information.";
                 }
             });
@@ -97,11 +98,11 @@ namespace Cyz2Json
 
             var rootCommand = new RootCommand("Convert CYZ files to JSON")
             {
-                inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption, regionInformationOption, regionDefinitionOverride
+                inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption, setInformationOption, setDefinitionOverride
             };
 
             // rootCommand.SetHandler(Convert, inputArgument, outputOption, rawOption, metadatagreedyOption);
-            rootCommand.SetHandler((FileInfo input, FileInfo output, bool raw, bool metadatagreedy, bool version, bool regionInformation, FileInfo regionDefinitionFile) =>
+            rootCommand.SetHandler((FileInfo input, FileInfo output, bool raw, bool metadatagreedy, bool version, bool setInformation, FileInfo setDefinitionFile) =>
 
 
             {
@@ -110,8 +111,8 @@ namespace Cyz2Json
                     HandleVersion();
                     return;
                 }
-                Convert(input, output, raw, metadatagreedy, regionInformation, regionDefinitionFile);
-            }, inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption, regionInformationOption, regionDefinitionOverride);
+                Convert(input, output, raw, metadatagreedy, setInformation, setDefinitionFile);
+            }, inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption, setInformationOption, setDefinitionOverride);
 
             rootCommand.TreatUnmatchedTokensAsErrors = false;
             rootCommand.Invoke(args);
@@ -122,9 +123,9 @@ namespace Cyz2Json
         /// Convert the flow cytometry data in the file designated by cyzFilename to Javscript Object Notation (JSON).
         /// If jsonFilename is null, echo the JSON to the console, otherwise store it a file designated by jsonFilename.
         /// </summary>
-        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw, bool metadatagreedy, bool regionInformation, FileInfo regionDefinitionFile)
+        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw, bool metadatagreedy, bool setInformation, FileInfo setDefinitionFile)
         {
-            var data = LoadData(cyzFilename.FullName, isRaw, metadatagreedy, regionInformation, regionDefinitionFile);
+            var data = LoadData(cyzFilename.FullName, isRaw, metadatagreedy, setInformation, setDefinitionFile);
 
             StreamWriter streamWriter;
 
@@ -146,7 +147,7 @@ namespace Cyz2Json
         /// <summary>
         /// Load all the flow cytometry data from the CYZ file designated by pathname.
         /// </summary>
-        private static Dictionary<string, object> LoadData(string pathname, bool isRaw, bool metadatagreedy, bool regionInformation, FileInfo regionDefinitionFile)
+        private static Dictionary<string, object> LoadData(string pathname, bool isRaw, bool metadatagreedy, bool setInformation, FileInfo setDefinitionFile)
         {
             var data = new Dictionary<string, object>();
 
@@ -174,11 +175,11 @@ namespace Cyz2Json
             }
             data["instrument"] = LoadInstrument(dfw, metadatagreedy);
 
-            RegionInformation regInfo;
+            SetInformation regInfo;
             SetsList ? sets = null;
-            if (regionInformation) {
-                (regInfo, sets) = RegionInformation.LoadRegionInformation(dfw, regionDefinitionFile);
-                data["region_information"] = regInfo;
+            if (setInformation) {
+                (regInfo, sets) = SetInformation.LoadImagingSetInformation(dfw, setDefinitionFile);
+                data["set_information"] = regInfo;
             }
 
             data["particles"] = LoadParticles(dfw, isRaw, sets);
@@ -281,7 +282,7 @@ namespace Cyz2Json
             var particles = new List<Dictionary<string, object>>();
 
             foreach (var particle in dfw.SplittedParticles)
-                particles.Add(LoadParticle(particle, isRaw, RegionInformation.LoadRegions(particle, sets)));
+                particles.Add(LoadParticle(particle, isRaw, SetInformation.LoadSetNames(particle, sets)));
 
             return particles;
         }
