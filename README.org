@@ -1,3 +1,20 @@
+
+## Repository archived (no longer maintained here)
+
+This codebase is now considered **end‑of‑life**. To avoid divergence, duplication of effort, and confusion for users, **no pull requests or new issues will be accepted** on this repository.
+
+For any more recent development please see the instrument manufacturer's fork at https://github.com/Cytobuoy/cyz2json which now **supersedes** this repository. We defer to the Cytobuoy fork for ongoing maintenance, and as such have renamed OBAMANEXT/cyz2json to OBAMANEXT/cyz2json_archived.
+
+This repository is retained in its original location to:
+- preserve **origin, provenance, and transparency** for OBAMA‑NEXT project deliverables,  
+- provide a **stable, citable record** of the code developed under the Cefas work programme,  
+- support compliance with Horizon Europe expectations for open dissemination of research outputs, including retention of archived, publicly accessible versions of software used in the project, and 
+- maintain continuity for users who may rely on the specific version of the code produced during OBAMA‑NEXT.
+
+This repository remains available under the original Cefas Crown Copyright BSD‑style licence. Portions of the software are © 2023 CytoBuoy B.V. and distributed under the terms of their associated licence materials (see `CyzFile-API_LICENSE.TXT`).
+
+
+
 #+TITLE: Cyz2Json - Convert flow cytometry CYZ files to JSON format.
 
 #+HTML: <img src="https://github.com/ecotaxa/cyz2json/actions/workflows/build.yml/badge.svg" alt="Build Cyz2Json"/>
