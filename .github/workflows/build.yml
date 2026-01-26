@@ -37,7 +37,7 @@ jobs:
           run: |
             # priority: workflow_dispatch input > ref_name (tag) > default 0.0.0
             VERSION="${{ github.event.inputs.version || github.ref_name || '0.0.0' }}"
-            # write version without extra newline or BOM
+            VERSION="${VERSION#v}"
             printf "%s" "$VERSION" > version.txt
 
         - name: Write version.txt (Windows)
@@ -47,7 +47,7 @@ jobs:
             $version = '${{ github.event.inputs.version }}'
             if ([string]::IsNullOrEmpty($version)) { $version = '${{ github.ref_name }}' }
             if ([string]::IsNullOrEmpty($version)) { $version = '0.0.0' }
-            # write UTF-8 without BOM and no trailing newline
+            if ($version.StartsWith('v')) { $version = $version.Substring(1) }
             [System.IO.File]::WriteAllText('version.txt', $version, [System.Text.Encoding]::UTF8)
             
         - name: Restore dependencies
