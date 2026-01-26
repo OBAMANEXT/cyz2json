@@ -72,28 +72,24 @@ jobs:
           run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=true
 
                 
-        - name: Copy License File
-          if: matrix.os == 'windows-latest'
-          run: Copy-Item LICENSE.txt -Destination "Cyz2Json/bin/Release/net8.0/win-x64/publish/"
-          shell: pwsh
+        - name: Publish
+          # Publish into a RID-specific folder so following steps know where to look
+          run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release -r ${{ steps.set-rid.outputs.rid }} --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=true -o Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish
 
         - name: Copy License File
-          if: matrix.os != 'windows-latest'
-          run: cp LICENSE.txt Cyz2Json/bin/Release/net8.0/*/publish/
-          shell: bash
-
-        - name: Zip Release Files
           if: matrix.os == 'windows-latest'
-          run: Compress-Archive -Path "./Cyz2Json/bin/Release/net8.0/*/*/" -DestinationPath "cyz2json-${{ matrix.os }}.zip"
+          run: |
+            $dest = "Cyz2Json\bin\Release\net8.0\${{ steps.set-rid.outputs.rid }}\publish\"
+            New-Item -ItemType Directory -Force -Path $dest | Out-Null
+            Copy-Item LICENSE.txt -Destination $dest
           shell: pwsh
 
         - name: Zip Release Files
-          if: matrix.os != 'windows-latest'
-          # run: zip -r cyz2json-${{ matrix.os }}.zip ./Cyz2Json/bin/Release/net8.0/*/*/
-          run: cd Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish && zip -r ../../../../../../cyz2json-${{ matrix.os }}.zip ./*
-          shell: bash
-
-
+          if: matrix.os == 'windows-latest'
+          run: |
+            $publishPath = "Cyz2Json\bin\Release\net8.0\${{ steps.set-rid.outputs.rid }}\publish\*"
+            Compress-Archive -Path $publishPath -DestinationPath "cyz2json-${{ matrix.os }}.zip" -Force
+          shell: pwsh
 
         - name: Check Release
           id: check_release
