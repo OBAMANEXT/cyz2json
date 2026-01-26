@@ -64,7 +64,12 @@ jobs:
             elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
               echo "rid=linux-x64" >> $GITHUB_OUTPUT
             elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-              echo "rid=osx-arm64" >> $GITHUB_OUTPUT
+              arch=$(uname -m)
+              if [ "$arch" = "arm64" ] || [ "$arch" = "aarch64" ]; then
+                echo "rid=osx-arm64" >> $GITHUB_OUTPUT
+              else
+                echo "rid=osx-x64" >> $GITHUB_OUTPUT
+              fi
             fi
           shell: bash
         
@@ -90,6 +95,12 @@ jobs:
             $publishPath = "Cyz2Json\bin\Release\net8.0\${{ steps.set-rid.outputs.rid }}\publish\*"
             Compress-Archive -Path $publishPath -DestinationPath "cyz2json-${{ matrix.os }}.zip" -Force
           shell: pwsh
+        
+        - name: Zip Release Files
+          if: matrix.os != 'windows-latest'
+          # run: zip -r cyz2json-${{ matrix.os }}.zip ./Cyz2Json/bin/Release/net8.0/*/*/
+          run: cd Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish && zip -r ../../../../../../cyz2json-${{ matrix.os }}.zip ./*
+          shell: bash
 
         - name: Check Release
           id: check_release
