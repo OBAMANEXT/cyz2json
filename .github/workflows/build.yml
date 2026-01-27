@@ -1,138 +1,179 @@
 name: Build Cyz2Json
 
 on:
-    push:
-      tags:
-        - 'v*'
-    workflow_dispatch: # Allows manual triggering
-      inputs:
-        version:
-          description: 'Version tag (e.g. v1.0.0)'
-          required: false
-          type: string
-        reason:
-          description: 'Reason for manual trigger'
-          required: false
-          default: 'Manual run'
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v1.0.0)'
+        required: false
+        type: string
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'Manual run'
+
 permissions:
   contents: write
+
 jobs:
-    build:
-        runs-on: ${{ matrix.os }}
-        strategy:
-          matrix:
-            os: [ubuntu-latest, windows-latest, macos-latest]
-            
-        steps:
-        - uses: actions/checkout@v3
-        
-        - name: Setup .NET
-          uses: actions/setup-dotnet@v4
-          with:
-                dotnet-version: '8.0.x'
-        
-        - name: Write version.txt (Linux / macOS)
-          if: matrix.os != 'windows-latest'
-          shell: bash
-          run: |
-            # priority: workflow_dispatch input > ref_name (tag) > default 0.0.0
-            VERSION="${{ github.event.inputs.version || github.ref_name || '0.0.0' }}" 
-            VERSION="${VERSION#v}"
-            printf "%s" "$VERSION" > version.txt
-          
-        - name: Write version.txt (Windows)
-          if: matrix.os == 'windows-latest'
-          shell: pwsh
-          run: |
-            $version = '${{ github.event.inputs.version }}'
-            if ([string]::IsNullOrEmpty($version)) { $version = '${{ github.ref_name }}' }
-            if ([string]::IsNullOrEmpty($version)) { $version = '0.0.0' }
-            if ($version.StartsWith('v')) { $version = $version.Substring(1) }
-            [System.IO.File]::WriteAllText('version.txt', $version, [System.Text.Encoding]::UTF8)
-            
-        - name: Restore dependencies
-          run: dotnet restore
-                      
-        - name: Build
-          run: dotnet build --configuration Release --no-restore
-        
-        - name: Set RID
-          id: set-rid
-          run: |
-            if [ "${{ matrix.os }}" == "windows-latest" ]; then
-              echo "rid=win-x64" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-              echo "rid=linux-x64" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-              arch=$(uname -m)
-              if [ "$arch" = "arm64" ] || [ "$arch" = "aarch64" ]; then
-                echo "rid=osx-arm64" >> $GITHUB_OUTPUT
-              else
-                echo "rid=osx-x64" >> $GITHUB_OUTPUT
-              fi
-            fi
-          shell: bash
-        
-        - name: Publish
-          run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=true
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
-                
-        - name: Publish
-          # Publish into a RID-specific folder so following steps know where to look
-          run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release -r ${{ steps.set-rid.outputs.rid }} --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=true -o Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish
+    steps:
+    - uses: actions/checkout@v3
 
-        - name: Copy License File
-          if: matrix.os == 'windows-latest'
-          run: |
-            $dest = "Cyz2Json\bin\Release\net8.0\${{ steps.set-rid.outputs.rid }}\publish\"
-            New-Item -ItemType Directory -Force -Path $dest | Out-Null
-            Copy-Item LICENSE.txt -Destination $dest
-          shell: pwsh
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
 
-        - name: Zip Release Files
-          if: matrix.os == 'windows-latest'
-          run: |
-            $publishPath = "Cyz2Json\bin\Release\net8.0\${{ steps.set-rid.outputs.rid }}\publish\*"
-            Compress-Archive -Path $publishPath -DestinationPath "cyz2json-${{ matrix.os }}.zip" -Force
-          shell: pwsh
-        
-        - name: Zip Release Files
-          if: matrix.os != 'windows-latest'
-          # run: zip -r cyz2json-${{ matrix.os }}.zip ./Cyz2Json/bin/Release/net8.0/*/*/
-          run: cd Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish && zip -r ../../../../../../cyz2json-${{ matrix.os }}.zip ./*
-          shell: bash
+    - name: Write version.txt (Linux / macOS)
+      if: matrix.os != 'windows-latest'
+      shell: bash
+      run: |
+        # priority: workflow_dispatch input > ref_name (tag) > default 0.0.0
+        VERSION="${{ github.event.inputs.version || github.ref_name || '0.0.0' }}"
+        VERSION="${VERSION#v}"
+        printf "%s" "$VERSION" > version.txt
 
-        - name: Check Release
-          id: check_release
-          uses: actions/github-script@v6
-          with:
-            script: |
-              const version = '${{ github.event.inputs.version || github.ref_name }}'
-              const reason = '${{ github.event.inputs.reason }}'
-              try {
-                const release = await github.rest.repos.getReleaseByTag({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  tag: version
-                })
-                core.setOutput('upload_url', release.data.upload_url.split('{')[0])
-              } catch (error) {
-                const release = await github.rest.repos.createRelease({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  tag_name: version,
-                  name: 'Release ' + version,
-                  body: reason
-                })
-                core.setOutput('upload_url', release.data.upload_url.split('{')[0])
-              }
+    - name: Write version.txt (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        $version = '${{ github.event.inputs.version }}'
+        if ([string]::IsNullOrEmpty($version)) { $version = '${{ github.ref_name }}' }
+        if ([string]::IsNullOrEmpty($version)) { $version = '0.0.0' }
+        if ($version.StartsWith('v')) { $version = $version.Substring(1) }
+        [System.IO.File]::WriteAllText('version.txt', $version, [System.Text.Encoding]::UTF8)
 
-        - name: Upload Release Asset
-          uses: actions/upload-release-asset@v1
-          env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-              upload_url: ${{ steps.check_release.outputs.upload_url }}?name=cyz2json-${{ matrix.os }}.zip # put in Download/vx.x.x
-              asset_path: cyz2json-${{ matrix.os }}.zip
-              asset_name: cyz2json-${{ matrix.os }}.zip
-              asset_content_type: application/zip
+    - name: Read version.txt into step output (Linux / macOS)
+      id: read_version
+      if: matrix.os != 'windows-latest'
+      shell: bash
+      run: |
+        if [ -f version.txt ]; then
+          echo "version=$(cat version.txt)" >> $GITHUB_OUTPUT
+        else
+          echo "version=0.0.0" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Read version.txt into step output (Windows)
+      id: read_version
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        if (Test-Path version.txt) {
+          $v = (Get-Content version.txt -Raw).Trim()
+        } else {
+          $v = '0.0.0'
+        }
+        echo "version=$v" >> $GITHUB_OUTPUT
+
+    - name: Restore dependencies
+      run: dotnet restore -p:Version=${{ steps.read_version.outputs.version }}
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore -p:Version=${{ steps.read_version.outputs.version }}
+
+    - name: Set RID
+      id: set-rid
+      run: |
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          echo "rid=win-x64" >> $GITHUB_OUTPUT
+        elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          echo "rid=linux-x64" >> $GITHUB_OUTPUT
+        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+          arch=$(uname -m)
+          if [ "$arch" = "arm64" ] || [ "$arch" = "aarch64" ]; then
+            echo "rid=osx-arm64" >> $GITHUB_OUTPUT
+          else
+            echo "rid=osx-x64" >> $GITHUB_OUTPUT
+          fi
+        fi
+      shell: bash
+
+    - name: Publish (self-contained generic)
+      run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=true -p:Version=${{ steps.read_version.outputs.version }}
+
+    - name: Publish (RID-specific output)
+      # Publish into a RID-specific folder so following steps know where to look
+      run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release -r ${{ steps.set-rid.outputs.rid }} --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=true -p:Version=${{ steps.read_version.outputs.version }} -o Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish
+
+    - name: Copy version.txt into publish (Linux / macOS)
+      if: matrix.os != 'windows-latest'
+      shell: bash
+      run: |
+        publish_dir="Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish"
+        mkdir -p "$publish_dir"
+        cp version.txt "$publish_dir/"
+
+    - name: Copy version.txt into publish (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        $destDir = "Cyz2Json\bin\Release\net8.0\${{ steps.set-rid.outputs.rid }}\publish"
+        New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+        Copy-Item version.txt -Destination $destDir
+
+    - name: Copy License File (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        $dest = "Cyz2Json\bin\Release\net8.0\${{ steps.set-rid.outputs.rid }}\publish\"
+        New-Item -ItemType Directory -Force -Path $dest | Out-Null
+        Copy-Item LICENSE.txt -Destination $dest
+      shell: pwsh
+
+    - name: Zip Release Files (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        $publishPath = "Cyz2Json\bin\Release\net8.0\${{ steps.set-rid.outputs.rid }}\publish\*"
+        Compress-Archive -Path $publishPath -DestinationPath "cyz2json-${{ matrix.os }}.zip" -Force
+      shell: pwsh
+
+    - name: Zip Release Files (Linux/macOS)
+      if: matrix.os != 'windows-latest'
+      run: |
+        cd Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish
+        zip -r ../../../../../../cyz2json-${{ matrix.os }}.zip ./*
+      shell: bash
+
+    - name: Check Release
+      id: check_release
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const version = '${{ steps.read_version.outputs.version }}';
+          const reason = '${{ github.event.inputs.reason }}';
+          try {
+            const release = await github.rest.repos.getReleaseByTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag: version
+            })
+            core.setOutput('upload_url', release.data.upload_url.split('{')[0])
+          } catch (error) {
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: version,
+              name: 'Release ' + version,
+              body: reason
+            })
+            core.setOutput('upload_url', release.data.upload_url.split('{')[0])
+          }
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.check_release.outputs.upload_url }}?name=cyz2json-${{ matrix.os }}.zip
+        asset_path: cyz2json-${{ matrix.os }}.zip
+        asset_name: cyz2json-${{ matrix.os }}.zip
+        asset_content_type: application/zip
