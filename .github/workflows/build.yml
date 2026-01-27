@@ -52,28 +52,19 @@ jobs:
         if ($version.StartsWith('v')) { $version = $version.Substring(1) }
         [System.IO.File]::WriteAllText('version.txt', $version, [System.Text.Encoding]::UTF8)
 
-    - name: Read version.txt into step output (Linux / macOS)
+    - name: Read version.txt into step output (cross-platform)
       id: read_version
-      if: matrix.os != 'windows-latest'
-      shell: bash
-      run: |
-        if [ -f version.txt ]; then
-          echo "version=$(cat version.txt)" >> $GITHUB_OUTPUT
-        else
-          echo "version=0.0.0" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Read version.txt into step output (Windows)
-      id: read_version
-      if: matrix.os == 'windows-latest'
-      shell: pwsh
-      run: |
-        if (Test-Path version.txt) {
-          $v = (Get-Content version.txt -Raw).Trim()
-        } else {
-          $v = '0.0.0'
-        }
-        echo "version=$v" >> $GITHUB_OUTPUT
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          let version = '0.0.0';
+          try {
+            version = fs.readFileSync('version.txt', 'utf8').trim() || '0.0.0';
+          } catch (e) {
+            // file missing -> keep default
+          }
+          core.setOutput('version', version);
 
     - name: Restore dependencies
       run: dotnet restore -p:Version=${{ steps.read_version.outputs.version }}
