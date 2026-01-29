@@ -10,7 +10,7 @@
 
 pkgs.mkShell {
   buildInputs = [
-    pkgs.dotnet-sdk_10
+    pkgs.dotnet-sdk_8
   ];
 
   shellHook = ''
