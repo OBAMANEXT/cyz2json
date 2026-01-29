@@ -12,7 +12,7 @@ we want to access the data from a wider set of data science tooling
 including Python and R. We therefore convert to JSON.
 
 This program uses the [[https://github.com/Cytobuoy/CyzFile-API][CytoBuoy CyzFile API]] and targets the Microsoft
-.NET 8 framework on Windows, macOS or Linux.
+.NET 10 framework on Windows, macOS or Linux.
 
 * Build instructions
 
@@ -47,14 +47,14 @@ docker run -v $(pwd):/src cyz2json-builder bash -c "dotnet publish -c Release --
 ** Build on the PC
 
 ** Installation
-The first step is to install the Microsoft dotnet runtime version 8.
+The first step is to install the Microsoft dotnet runtime version 10.
 Microsoft provides detailed instructions at
 https://learn.microsoft.com/en-us/dotnet/core/install/.
 
 For example, installation on Linux Ubuntu 22.04 is as follows:
 
 #+begin_src bash
-sudo apt-get update && sudo apt-get install -y dotnet-sdk-8.0
+sudo apt-get update && sudo apt-get install -y dotnet-sdk-10.0
 #+end_src
 
 You can test that =dotnet= is installed on your system by typing:

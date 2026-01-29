@@ -1,5 +1,5 @@
-FROM mcr.microsoft.com/dotnet/runtime:8.0
+FROM mcr.microsoft.com/dotnet/runtime:10.0
 RUN apt-get update && apt-get install -y libopencv-dev libopencv-contrib-dev
 WORKDIR /app
-COPY bin/Release/net8.0/linux-x64/publish/ .
+COPY bin/Release/net10.0/linux-x64/publish/ .
 ENTRYPOINT ["./Cyz2Json"]
