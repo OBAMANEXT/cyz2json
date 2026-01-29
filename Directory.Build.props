@@ -1,5 +1,26 @@
 <Project>
   <PropertyGroup>
-    <Version>$([System.IO.File]::ReadAllText("$(MSBuildThisFileDirectory)version.txt"))</Version>
+    <!-- Base numeric version to ensure MSBuild never fails -->
+    <Version>0.0.0</Version>
+
+    <!-- Construct an InformationalVersion automatically -->
+    <!-- 1. Try to get short Git SHA -->
+    <GitSha>$([System.IO.File]::Exists('$(MSBuildThisFileDirectory).git/HEAD') ? 
+      $([System.String]::Copy($([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory).git/HEAD')))) : 
+      '')</GitSha>
+
+    <!-- Extract the actual SHA when HEAD is "ref: refs/heads/..." -->
+    <GitSha>$([System.IO.File]::Exists('$(MSBuildThisFileDirectory).git/$(GitSha.Trim().Replace('ref: ', ''))') ? 
+      $([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory).git/$(GitSha.Trim().Replace('ref: ', ''))) ) : 
+      $(GitSha) )</GitSha>
+
+    <!-- A fallback timestamp if SHA is empty (ZIP downloads, no git folder, etc.) -->
+    <FallbackStamp>$([System.DateTime]::UtcNow.ToString("yyyyMMdd-HHmmss"))</FallbackStamp>
+
+    <!-- Final informational version -->
+    <InformationalVersion>
+      $(Version)+sha.$(GitSha)$(GitSha == '' ? '-ts.$(FallbackStamp)' : '')
+    </InformationalVersion>
+
   </PropertyGroup>
 </Project>
