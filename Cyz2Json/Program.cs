@@ -15,6 +15,7 @@ using Newtonsoft.Json.Serialization;
 using System.CommandLine;
 // using OpenCvSharp;
 using System.Reflection;
+using CytoSense.Data.Analysis;
 
 
 // Design decisions:
@@ -77,13 +78,31 @@ namespace Cyz2Json
                 // new[] { "-V", "--version" },
                 description: "Display version information");
 
+
+            var setInformationOption = new Option<bool>(
+                name: "--imaging-set-information",
+                description: "Export set information for imaging"
+            );
+
+            var setDefinitionOverride = new Option<FileInfo>(
+                name: "--imaging-set-definition",
+                description: "File with set definitions, overrides the definitions stored in the file."
+            ).ExistingOnly();
+
+            setDefinitionOverride.AddValidator( result  => { 
+                if ( ! result.GetValueForOption(setInformationOption) ) {
+                    result.ErrorMessage = "Specifying a region information file is only useful when exporting region information.";
+                }
+            });
+
+
             var rootCommand = new RootCommand("Convert CYZ files to JSON")
             {
-                inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption
+                inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption, setInformationOption, setDefinitionOverride
             };
 
             // rootCommand.SetHandler(Convert, inputArgument, outputOption, rawOption, metadatagreedyOption);
-            rootCommand.SetHandler((FileInfo input, FileInfo output, bool raw, bool metadatagreedy, bool version) =>
+            rootCommand.SetHandler((FileInfo input, FileInfo output, bool raw, bool metadatagreedy, bool version, bool setInformation, FileInfo setDefinitionFile) =>
 
 
             {
@@ -92,8 +111,8 @@ namespace Cyz2Json
                     HandleVersion();
                     return;
                 }
-                Convert(input, output, raw, metadatagreedy);
-            }, inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption);
+                Convert(input, output, raw, metadatagreedy, setInformation, setDefinitionFile);
+            }, inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption, setInformationOption, setDefinitionOverride);
 
             rootCommand.TreatUnmatchedTokensAsErrors = false;
             rootCommand.Invoke(args);
@@ -104,9 +123,9 @@ namespace Cyz2Json
         /// Convert the flow cytometry data in the file designated by cyzFilename to Javscript Object Notation (JSON).
         /// If jsonFilename is null, echo the JSON to the console, otherwise store it a file designated by jsonFilename.
         /// </summary>
-        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw, bool metadatagreedy)
+        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw, bool metadatagreedy, bool setInformation, FileInfo setDefinitionFile)
         {
-            var data = LoadData(cyzFilename.FullName, isRaw, metadatagreedy);
+            var data = LoadData(cyzFilename.FullName, isRaw, metadatagreedy, setInformation, setDefinitionFile);
 
             StreamWriter streamWriter;
 
@@ -128,7 +147,7 @@ namespace Cyz2Json
         /// <summary>
         /// Load all the flow cytometry data from the CYZ file designated by pathname.
         /// </summary>
-        private static Dictionary<string, object> LoadData(string pathname, bool isRaw, bool metadatagreedy)
+        private static Dictionary<string, object> LoadData(string pathname, bool isRaw, bool metadatagreedy, bool setInformation, FileInfo setDefinitionFile)
         {
             var data = new Dictionary<string, object>();
 
@@ -155,12 +174,21 @@ namespace Cyz2Json
                 dfw.ConcentrationMode = ConcentrationModeEnum.Pre_measurement_FTDI;
             }
             data["instrument"] = LoadInstrument(dfw, metadatagreedy);
-            data["particles"] = LoadParticles(dfw, isRaw);
+
+            SetInformation regInfo;
+            SetsList ? sets = null;
+            if (setInformation) {
+                (regInfo, sets) = SetInformation.LoadImagingSetInformation(dfw, setDefinitionFile);
+                data["set_information"] = regInfo;
+            }
+
+            data["particles"] = LoadParticles(dfw, isRaw, sets);
             data["images"] = LoadImages(dfw);
             // data["crop_images"] = LoadCropImages(dfw);
 
             return data;
         }
+
 
         private static Dictionary<string, object> LoadInstrument(DataFileWrapper dfw, bool metadatagreedy)
         {
@@ -217,29 +245,74 @@ namespace Cyz2Json
                 measurementSettings["takeImages"] = dfw.MeasurementSettings.IIFCheck;
                 measurementSettings["PMTlevels_str"] = dfw.MeasurementSettings.PMTlevels_str;
                 measurementSettings["sensorLimits"] = dfw.CytoSettings.SensorLimits;
+
+                // VLIZ version (all those data should be in metadatagreedy = true)
+                // measurementSettings["name"] = dfw.MeasurementSettings.TabName;
+                // measurementSettings["duration"] = dfw.MeasurementSettings.StopafterTimertext;
+                // measurementSettings["pumpSpeed"] = dfw.MeasurementSettings.ConfiguredSamplePompSpeed;
+                // measurementSettings["triggerChannel"] = dfw.MeasurementSettings.TriggerChannel;
+                // measurementSettings["triggerLevel"] = dfw.MeasurementSettings.TriggerLevel1e;
+                // measurementSettings["smartTrigger"] = dfw.MeasurementSettings.SmartTriggeringEnabled;
+
+                // measurementSettings["easy_display_cytoclus"] = dfw.MeasurementSettings.PMTlevels_str;
+                // measurementSettings["sampling_time_s"] = dfw.MeasurementSettings.StopafterTimertext; // seconds
+                // measurementSettings["sample_pump_ul_s"] = dfw.MeasurementSettings.ConfiguredSamplePompSpeed; // muL/s
+                // measurementSettings["limit_particle_rate_s"] = dfw.MeasurementSettings.MaxParticleRate;
+                // measurementSettings["minimum_speed_ul_s"] = dfw.MeasurementSettings.MinimumAutoSpeed;
+                // measurementSettings["flush"] = dfw.MeasurementSettings.FlushCheck;
+                // measurementSettings["beads_measurement_2"] = dfw.MeasurementSettings.IsBeadsMeasurement;
+                // if (dfw.MeasurementSettings.SmartTriggeringEnabled)
+                    // measurementSettings["smart_trigger"]           = dfw.MeasurementSettings.SmartTriggerSettingDescription; // VELIZ line
+                    // measurementSettings["smartTriggerDescription"] = dfw.MeasurementSettings.SmartTriggerSettingDescription; // Joseph Ribeiro line
+
+                // measurementSettings["takeImages"] = dfw.MeasurementSettings.IIFCheck;
+                // measurementSettings["images_in_flow"] = dfw.CytoSettings.hasImageAndFlow;
+                // measurementSettings["speak_when_finished"] = dfw.MeasurementSettings.TellCheck;
+                // measurementSettings["enable_images_in_flow"] = dfw.MeasurementSettings.IIFCheck;
+                // measurementSettings["maximum_images_in_flow"] = dfw.MeasurementSettings.MaxNumberFotoText;
+                // measurementSettings["ROI"] = dfw.MeasurementSettings.IIFRoiName;
+                // measurementSettings["restrict_FWS_min"] = dfw.MeasurementSettings.IIFFwsRatioMin;
+                // measurementSettings["restrict_FWS_max"] = dfw.MeasurementSettings.IIFFwsRatioMax;
+                // measurementSettings["measurement_noise_levels"] = dfw.MeasurementSettings.MeasureNoiseLevels;
+                // measurementSettings["target_mode"] = dfw.MeasurementSettings.IIFuseTargetAll;
+                // measurementSettings["adaptive_MaxTimeOut"] = dfw.MeasurementSettings.AdaptiveMaxTimeOut;
+                // measurementSettings["adaptive_MaxTimeOut3"] = dfw.MeasurementSettings.MaxTimeOut_str;
+                // measurementSettings["enable_export"] = dfw.MeasurementSettings.EnableExport;
+                // measurementSettings["IIFuseSmartGrid"] = dfw.MeasurementSettings.IIFuseSmartGrid; //smartgrid use yes no
+                // measurementSettings["SmartTriggeringEnabled"] = dfw.MeasurementSettings.SmartTriggeringEnabled;
+                // measurementSettings["SmartGrid_str"] = dfw.MeasurementSettings.SmartGrid_str;  //string with name of all channels used for smartgrid
+                // measurementSettings["TriggerChannel"] = dfw.MeasurementSettings.TriggerChannel;
+                // measurementSettings["TriggerLevel1e"] = dfw.MeasurementSettings.TriggerLevel1e;       // Trigger level in mv. for the first grabber board.
+                // measurementSettings["SelectedIifMode"] = dfw.MeasurementSettings.SelectedIifMode;
+
+                //measurementSettings["all"] = dfw.MeasurementSettings;
                             
                 return measurementSettings;
             }
         }
 
 
-        private static List<Dictionary<string, object>> LoadParticles(DataFileWrapper dfw, bool isRaw)
+        private static List<Dictionary<string, object>> LoadParticles(DataFileWrapper dfw, bool isRaw, SetsList ? sets)
         {
             var particles = new List<Dictionary<string, object>>();
 
             foreach (var particle in dfw.SplittedParticles)
-                particles.Add(LoadParticle(particle, isRaw));
+                particles.Add(LoadParticle(particle, isRaw, SetInformation.LoadSetNames(particle, sets)));
 
             return particles;
         }
 
-        private static Dictionary<string, object> LoadParticle(Particle particle, bool isRaw)
+        private static Dictionary<string, object> LoadParticle(Particle particle, bool isRaw, List<string> ? particleRegions)
         {
 
             var particleData = new Dictionary<string, object>();
 
             particleData["particleId"] = particle.ID;
             particleData["hasImage"] = particle.hasImage;
+
+            if (particleRegions != null) {
+                particleData["region"] = particleRegions;
+            }
 
             // Pulse shapes
 
