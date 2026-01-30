@@ -233,42 +233,57 @@ namespace Cyz2Json
                 var measurementSettings = new Dictionary<string, object>();
 
                 measurementSettings["name"] = dfw.MeasurementSettings.TabName;
-                measurementSettings["duration"] = dfw.MeasurementSettings.StopafterTimertext;
-                measurementSettings["pumpSpeed"] = dfw.MeasurementSettings.ConfiguredSamplePompSpeed;
+                measurementSettings["duration"] = dfw.MeasurementSettings.StopafterTimertext; // seconds
+                measurementSettings["pumpSpeed"] = dfw.MeasurementSettings.ConfiguredSamplePompSpeed; // muL/s
                 measurementSettings["triggerChannel"] = dfw.MeasurementSettings.TriggerChannel;
                 measurementSettings["triggerLevel"] = dfw.MeasurementSettings.TriggerLevel1e;
                 measurementSettings["smartTrigger"] = dfw.MeasurementSettings.SmartTriggeringEnabled;
-
-                measurementSettings["easy_display_cytoclus"] = dfw.MeasurementSettings.PMTlevels_str;
-                measurementSettings["sampling_time_s"] = dfw.MeasurementSettings.StopafterTimertext; // seconds
-                measurementSettings["sample_pump_ul_s"] = dfw.MeasurementSettings.ConfiguredSamplePompSpeed; // muL/s
-                measurementSettings["limit_particle_rate_s"] = dfw.MeasurementSettings.MaxParticleRate;
-                measurementSettings["minimum_speed_ul_s"] = dfw.MeasurementSettings.MinimumAutoSpeed;
-                measurementSettings["flush"] = dfw.MeasurementSettings.FlushCheck;
-                measurementSettings["beads_measurement_2"] = dfw.MeasurementSettings.IsBeadsMeasurement;
+                
                 if (dfw.MeasurementSettings.SmartTriggeringEnabled)
-                    measurementSettings["smart_trigger"]           = dfw.MeasurementSettings.SmartTriggerSettingDescription; // VELIZ line
+                    measurementSettings["smartTriggerDescription"] = dfw.MeasurementSettings.SmartTriggerSettingDescription;
+                    
+                measurementSettings["takeImages"] = dfw.MeasurementSettings.IIFCheck;
+                measurementSettings["PMTlevels_str"] = dfw.MeasurementSettings.PMTlevels_str;
+                measurementSettings["sensorLimits"] = dfw.CytoSettings.SensorLimits;
+
+                // VLIZ version (all those data should be in metadatagreedy = true)
+                // measurementSettings["name"] = dfw.MeasurementSettings.TabName;
+                // measurementSettings["duration"] = dfw.MeasurementSettings.StopafterTimertext;
+                // measurementSettings["pumpSpeed"] = dfw.MeasurementSettings.ConfiguredSamplePompSpeed;
+                // measurementSettings["triggerChannel"] = dfw.MeasurementSettings.TriggerChannel;
+                // measurementSettings["triggerLevel"] = dfw.MeasurementSettings.TriggerLevel1e;
+                // measurementSettings["smartTrigger"] = dfw.MeasurementSettings.SmartTriggeringEnabled;
+
+                // measurementSettings["easy_display_cytoclus"] = dfw.MeasurementSettings.PMTlevels_str;
+                // measurementSettings["sampling_time_s"] = dfw.MeasurementSettings.StopafterTimertext; // seconds
+                // measurementSettings["sample_pump_ul_s"] = dfw.MeasurementSettings.ConfiguredSamplePompSpeed; // muL/s
+                // measurementSettings["limit_particle_rate_s"] = dfw.MeasurementSettings.MaxParticleRate;
+                // measurementSettings["minimum_speed_ul_s"] = dfw.MeasurementSettings.MinimumAutoSpeed;
+                // measurementSettings["flush"] = dfw.MeasurementSettings.FlushCheck;
+                // measurementSettings["beads_measurement_2"] = dfw.MeasurementSettings.IsBeadsMeasurement;
+                // if (dfw.MeasurementSettings.SmartTriggeringEnabled)
+                    // measurementSettings["smart_trigger"]           = dfw.MeasurementSettings.SmartTriggerSettingDescription; // VELIZ line
                     // measurementSettings["smartTriggerDescription"] = dfw.MeasurementSettings.SmartTriggerSettingDescription; // Joseph Ribeiro line
 
-                measurementSettings["takeImages"] = dfw.MeasurementSettings.IIFCheck;
-                measurementSettings["images_in_flow"] = dfw.CytoSettings.hasImageAndFlow;
-                measurementSettings["speak_when_finished"] = dfw.MeasurementSettings.TellCheck;
-                measurementSettings["enable_images_in_flow"] = dfw.MeasurementSettings.IIFCheck;
-                measurementSettings["maximum_images_in_flow"] = dfw.MeasurementSettings.MaxNumberFotoText;
-                measurementSettings["ROI"] = dfw.MeasurementSettings.IIFRoiName;
-                measurementSettings["restrict_FWS_min"] = dfw.MeasurementSettings.IIFFwsRatioMin;
-                measurementSettings["restrict_FWS_max"] = dfw.MeasurementSettings.IIFFwsRatioMax;
-                measurementSettings["measurement_noise_levels"] = dfw.MeasurementSettings.MeasureNoiseLevels;
-                measurementSettings["target_mode"] = dfw.MeasurementSettings.IIFuseTargetAll;
-                measurementSettings["adaptive_MaxTimeOut"] = dfw.MeasurementSettings.AdaptiveMaxTimeOut;
-                measurementSettings["adaptive_MaxTimeOut3"] = dfw.MeasurementSettings.MaxTimeOut_str;
-                measurementSettings["enable_export"] = dfw.MeasurementSettings.EnableExport;
-                measurementSettings["IIFuseSmartGrid"] = dfw.MeasurementSettings.IIFuseSmartGrid; //smartgrid use yes no
-                measurementSettings["SmartTriggeringEnabled"] = dfw.MeasurementSettings.SmartTriggeringEnabled;
-                measurementSettings["SmartGrid_str"] = dfw.MeasurementSettings.SmartGrid_str;  //string with name of all channels used for smartgrid
-                measurementSettings["TriggerChannel"] = dfw.MeasurementSettings.TriggerChannel;
-                measurementSettings["TriggerLevel1e"] = dfw.MeasurementSettings.TriggerLevel1e;       // Trigger level in mv. for the first grabber board.
-                measurementSettings["SelectedIifMode"] = dfw.MeasurementSettings.SelectedIifMode;
+                // measurementSettings["takeImages"] = dfw.MeasurementSettings.IIFCheck;
+                // measurementSettings["images_in_flow"] = dfw.CytoSettings.hasImageAndFlow;
+                // measurementSettings["speak_when_finished"] = dfw.MeasurementSettings.TellCheck;
+                // measurementSettings["enable_images_in_flow"] = dfw.MeasurementSettings.IIFCheck;
+                // measurementSettings["maximum_images_in_flow"] = dfw.MeasurementSettings.MaxNumberFotoText;
+                // measurementSettings["ROI"] = dfw.MeasurementSettings.IIFRoiName;
+                // measurementSettings["restrict_FWS_min"] = dfw.MeasurementSettings.IIFFwsRatioMin;
+                // measurementSettings["restrict_FWS_max"] = dfw.MeasurementSettings.IIFFwsRatioMax;
+                // measurementSettings["measurement_noise_levels"] = dfw.MeasurementSettings.MeasureNoiseLevels;
+                // measurementSettings["target_mode"] = dfw.MeasurementSettings.IIFuseTargetAll;
+                // measurementSettings["adaptive_MaxTimeOut"] = dfw.MeasurementSettings.AdaptiveMaxTimeOut;
+                // measurementSettings["adaptive_MaxTimeOut3"] = dfw.MeasurementSettings.MaxTimeOut_str;
+                // measurementSettings["enable_export"] = dfw.MeasurementSettings.EnableExport;
+                // measurementSettings["IIFuseSmartGrid"] = dfw.MeasurementSettings.IIFuseSmartGrid; //smartgrid use yes no
+                // measurementSettings["SmartTriggeringEnabled"] = dfw.MeasurementSettings.SmartTriggeringEnabled;
+                // measurementSettings["SmartGrid_str"] = dfw.MeasurementSettings.SmartGrid_str;  //string with name of all channels used for smartgrid
+                // measurementSettings["TriggerChannel"] = dfw.MeasurementSettings.TriggerChannel;
+                // measurementSettings["TriggerLevel1e"] = dfw.MeasurementSettings.TriggerLevel1e;       // Trigger level in mv. for the first grabber board.
+                // measurementSettings["SelectedIifMode"] = dfw.MeasurementSettings.SelectedIifMode;
 
                 //measurementSettings["all"] = dfw.MeasurementSettings;
                             
@@ -363,6 +378,7 @@ namespace Cyz2Json
 
                 channel["id"] = channelList.ID;
                 channel["description"] = channelList.Description;
+                channel["colour"] = channelList.DefaultColor;
                 channels.Add(channel);
             }
 
@@ -375,21 +391,55 @@ namespace Cyz2Json
 
             measurementResults["start"] = dfw.MeasurementInfo.MeasurementStart;
 
-            // measurementResults["duration"] = dfw.MeasurementInfo.ActualMeasureTime; // Robert Blackwell line
-            measurementResults["maximum_measurement_time_s"] = dfw.MeasurementInfo.ActualMeasureTime; // VELIZ line
+            measurementResults["duration"] = dfw.MeasurementInfo.ActualMeasureTime;
+            // measurementResults["maximum_measurement_time_s"] = dfw.MeasurementInfo.ActualMeasureTime; // VELIZ line
             measurementResults["particleCount"] = dfw.MeasurementInfo.NumberofCountedParticles;
             measurementResults["particlesInFileCount"] = dfw.MeasurementInfo.NumberofSavedParticles;
             measurementResults["pictureCount"] = dfw.MeasurementInfo.NumberOfPictures;
-            measurementResults["pumped_volume"] = dfw.pumpedVolume; // muL
-            measurementResults["analysed_volume"] = dfw.analyzedVolume; // muL
+            measurementResults["pumpedVolume"] = dfw.pumpedVolume; // muL
+            measurementResults["analysedVolume"] = dfw.analyzedVolume; // muL
             measurementResults["particleConcentration"] = dfw.Concentration; // n/muL
 
             // Auxiliary Sensor Data
-
             measurementResults["systemTemperature"] = dfw.MeasurementInfo.SystemTemp; // C
             measurementResults["sheathTemperature"] = dfw.MeasurementInfo.SheathTemp; // C
-            measurementResults["absolutePressure"] = dfw.MeasurementInfo.ABSPressure; // mbar
-            measurementResults["differentialPressure"] = dfw.MeasurementInfo.DiffPressure; // mbar
+            measurementResults["pressureAbsolute"] = dfw.MeasurementInfo.ABSPressure; // mbar
+            measurementResults["pressureDifferential"] = dfw.MeasurementInfo.DiffPressure; // mbar
+            measurementResults["PMTtemperature"] = dfw.MeasurementInfo.PMTTemp; //C
+            measurementResults["buoyTemperature"] = dfw.MeasurementInfo.BuoyTemp; //C
+            measurementResults["referenceVoltageRatio"] = dfw.MeasurementInfo.VRefFactor;
+            measurementResults["intVoltage"] = dfw.MeasurementInfo.intVoltage; //V
+            measurementResults["rechargeCurrent"] = dfw.MeasurementInfo.internalRecharge; //mA
+            measurementResults["laserTemperature"] = dfw.MeasurementInfo.LaserTemp; // C
+
+            // The following lines are not necessary but can be uncommented to export the corresponding data
+
+            // Logs
+            // measurementResults["systemTemperatureLogs"] = dfw.MeasurementInfo.sensorLogs.SystemTemp; // C
+            // measurementResults["sheathTemperatureLogs"] = dfw.MeasurementInfo.sensorLogs.SheathTemp; // C
+            // measurementResults["PMTtemperatureLogs"] = dfw.MeasurementInfo.sensorLogs.PMTTemp; //C
+            // measurementResults["buoyTemperatureLogs"] = dfw.MeasurementInfo.sensorLogs.BuoyTemp; //C
+            // measurementResults["referenceVoltageRatioLogs"] = dfw.MeasurementInfo.sensorLogs.VRefFactor;
+            // measurementResults["extSupplyPowerVoltageLogs"] = dfw.MeasurementInfo.sensorLogs.extSupplyPowerVoltage; //V
+            // measurementResults["buoyVoltageLogs"] = dfw.MeasurementInfo.sensorLogs.BuoyExtBatteryVoltage; //V
+            // measurementResults["pressureExtLogs"] = dfw.MeasurementInfo.sensorLogs.extPressure; //bar
+            // measurementResults["filterPressureLogs"] = dfw.MeasurementInfo.sensorLogs.ExternalFiltersPressureData; //mbar
+            // measurementResults["intVoltageLogs"] = dfw.MeasurementInfo.sensorLogs.intVoltage; //V
+            // measurementResults["rechargeCurrentLogs"] = dfw.MeasurementInfo.sensorLogs.internalRecharge; //mA
+            // measurementResults["laserTemperatureLogs"] = dfw.MeasurementInfo.sensorLogs.LaserTemp; //C
+
+            // Laser data
+            // measurementResults["laser1BaseTemperature"] = dfw.MeasurementInfo.Laser1BaseTemperature; //C
+            // measurementResults["laser1BaseTemperatureLogs"] = dfw.MeasurementInfo.sensorLogs.Laser1BaseTemperature; //C
+            // measurementResults["laser1DiodeTemperature"] = dfw.MeasurementInfo.Laser1DiodeTemperature; //C
+            // measurementResults["laser1DiodeTemperatureLogs"] = dfw.MeasurementInfo.sensorLogs.Laser1DiodeTemperature; //C
+            // measurementResults["laser1DiodeCurrent"] = dfw.MeasurementInfo.Laser1DiodeCurrent; //mA
+            // measurementResults["laser1DiodeCurrentLogs"] = dfw.MeasurementInfo.sensorLogs.Laser1DiodeCurrent; //mA
+            // measurementResults["laser1TECLoad"] = dfw.MeasurementInfo.Laser1TecLoad; //%
+            // measurementResults["laser1TECLoadLogs"] = dfw.MeasurementInfo.sensorLogs.Laser1TecLoad; //%
+            // measurementResults["laser1InputVoltage"] = dfw.MeasurementInfo.Laser1InputVoltage; //V
+            // measurementResults["laser1InputVoltageLogsc"] = dfw.MeasurementInfo.sensorLogs.Laser1InputVoltage; //V
+            // measurementResults["laser1Mode"] = dfw.MeasurementInfo.Laser1Mode;
 
             return measurementResults;
         }

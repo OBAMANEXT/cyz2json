@@ -1,5 +1,28 @@
 <Project>
+  <!--
+    Behavior:
+    - If MSBuild property 'Version' is already provided (for example via /p:Version=1.2.3),
+      we keep it.
+    - Otherwise, if version.txt exists next to this file, read the first non-empty
+      line and use it as Version.
+    - Otherwise, fall back to a safe default (0.0.0).
+  -->
   <PropertyGroup>
-    <Version>$([System.IO.File]::ReadAllText("$(MSBuildThisFileDirectory)version.txt"))</Version>
+    <!-- Default fallback (only used if not overridden below) -->
+    <Version Condition="'$(Version)' == ''">0.0.0</Version>
   </PropertyGroup>
+
+  <Target Name="ReadVersionFile" BeforeTargets="GetAssemblyVersion" Condition="Exists('$(MSBuildThisFileDirectory)version.txt') and '$(Version)' == '0.0.0'">
+    <!-- Read the file into items; use the first non-empty trimmed line as Version -->
+    <ReadLinesFromFile File="$(MSBuildThisFileDirectory)version.txt">
+      <Output TaskParameter="Lines" ItemName="VersionLines" />
+    </ReadLinesFromFile>
+
+    <PropertyGroup>
+      <_FirstVersionLine Condition="'@(VersionLines)' != ''">%(VersionLines.Identity)</_FirstVersionLine>
+      <!-- Trim whitespace/newlines -->
+      <_FirstVersionLineTrimmed>$([System.String]::Copy($([System.Text.RegularExpressions.Regex]::Replace('$(_FirstVersionLine)', '^\s+|\s+$', ''))))</_FirstVersionLineTrimmed>
+      <Version Condition="'$(_FirstVersionLineTrimmed)' != ''">$(_FirstVersionLineTrimmed)</Version>
+    </PropertyGroup>
+  </Target>
 </Project>
