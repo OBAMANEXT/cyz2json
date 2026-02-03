@@ -43,8 +43,8 @@ jobs:
           # Build + publish with custom MSBuild properties
           dotnet msbuild CyzFile/CyzFile.vbproj -target:Publish -p:OutputPath=../../temp_dir/ -p:Configuration=Release -p:TargetFramework=net8.0
 
-          echo "Contenu de ../../temp_build :"
-          ls -R ../../temp_build
+          echo "Contenu de ../../temp_dir :"
+          ls -R ../../temp_dir
           
           # Make dir to store publish result and copy
           mkdir -p ../../$TARGET_DIR/$LATEST_TAG
