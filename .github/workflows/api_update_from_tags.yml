@@ -32,8 +32,8 @@ jobs:
           dotnet publish CyzFile/CyzFile.vbproj --configuration Release --framework net8.0
 
           # Copy compiled files to target dir
-          mkdir -p ../$TARGET_DIR
-          cp -r AnyCPU/Release/net*/publish ../$TARGET_DIR/
+          mkdir -p ../../$TARGET_DIR
+          cp -r AnyCPU/Release/net*/publish ../../$TARGET_DIR/
 
           # Clean cloned repo
           cd ..
