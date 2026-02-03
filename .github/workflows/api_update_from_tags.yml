@@ -21,15 +21,23 @@ jobs:
         run: |
           REPO_OWNER="CytoBuoy"
           REPO_NAME="CyzFile-API"
-          TARGET_DIR="Cyz2Json"
+          BASE_TARGET_DIR="Cyz2Json"
 
           # Clone API repo
           git clone https://github.com/$REPO_OWNER/$REPO_NAME.git external-repo
+
+          # Path to temporary dir (for build)
+          TEMP_DIR="$GITHUB_WORKSPACE/temp_dir"
+          mkdir -p "$TEMP_DIR"
+          
           cd external-repo
 
           # Get latest tag
           LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
           echo "Latest tag found : $LATEST_TAG"
+
+          # Path to result dir
+          FULL_TARGET_DIR="$GITHUB_WORKSPACE/$BASE_TARGET_DIR/$LATEST_TAG"
 
           # Checkout the tag
           git checkout $LATEST_TAG
@@ -38,32 +46,31 @@ jobs:
           dotnet restore
 
           # Build + publish with custom MSBuild properties
-          dotnet msbuild CyzFile/CyzFile.vbproj -target:Publish -p:OutputPath=../../temp_dir/ -p:Configuration=Release -p:TargetFramework=net8.0
+          dotnet msbuild CyzFile/CyzFile.vbproj -target:Publish -p:OutputPath=$TEMP_DIR -p:Configuration=Release -p:TargetFramework=net8.0
 
-          echo "Contenu de ../temp_dir :"
-          ls -R ../temp_dir
+          echo "Content of $TEMP_DIR :"
+          ls -R $TEMP_DIR
           
           # Make dir to store publish result and copy
-          mkdir -p ../../$TARGET_DIR/$LATEST_TAG
+          mkdir -p "$FULL_TARGET_DIR"
+
+          # Path to publish dir
+          PUBLISH_DIR="$TEMP_DIR/publish"
+
+          echo "Chemin source : $PUBLISH_DIR"
+          echo "Chemin destination : $FULL_TARGET_DIR"
           
-          SOURCE_DIR=$(pwd)/../temp_dir/publish
-          DEST_DIR=$(pwd)/../../$TARGET_DIR/$LATEST_TAG
-          
-          echo "Chemin source : $SOURCE_DIR"
-          echo "Chemin destination : $DEST_DIR"
-          
-          if [ -d "$SOURCE_DIR" ]; then
-            echo "Copie des fichiers depuis $SOURCE_DIR vers $DEST_DIR"
-            cp -r "$SOURCE_DIR"/. "$DEST_DIR/"
+          if [ -d "$PUBLISH_DIR" ]; then
+            echo "Copie des fichiers depuis $PUBLISH_DIR vers $FULL_TARGET_DIR"
+            cp -r "$PUBLISH_DIR"/* "$FULL_TARGET_DIR/"
           else
-            echo "Erreur : Le dossier source $SOURCE_DIR n'existe pas."
+            echo "Erreur : Le dossier source $PUBLISH_DIR n'existe pas."
             exit 1
           fi
-          
-          # Clean cloned repo
-          cd ..
+      
+          # Clean temporary folders
+          rm -rf "$TEMP_DIR"
           rm -rf external-repo
-          rm -rf temp_dir
 
       - name: Commit and push changes
         run: |
