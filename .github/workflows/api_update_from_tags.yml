@@ -36,8 +36,8 @@ jobs:
 
           # Compile the API (only CyzFile)
           dotnet restore
-          mkdir -p ../$TARGET_DIR/$LATEST_TAG
-          dotnet msbuild CyzFile/CyzFile.vbproj -p:OutputPath=../$TARGET_DIR/$LATEST_TAG -p:Configuration=Release
+          mkdir -p ../../$TARGET_DIR/$LATEST_TAG
+          dotnet msbuild CyzFile/CyzFile.vbproj -p:OutputPath=../../$TARGET_DIR/$LATEST_TAG -p:Configuration=Release
 
           # Clean cloned repo
           cd ..
