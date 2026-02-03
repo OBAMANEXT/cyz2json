@@ -3,7 +3,7 @@ name: Update API from Latest Tag
 on:
   workflow_dispatch:  
   schedule:
-    - cron: '0 8 * * *'  
+    - cron: '0 2 * * *'  
 
 jobs:
   update-api:
@@ -47,9 +47,6 @@ jobs:
 
           # Build + publish with custom MSBuild properties
           dotnet msbuild CyzFile/CyzFile.vbproj -target:Publish -p:OutputPath=$TEMP_DIR/ -p:Configuration=Release -p:TargetFramework=net8.0
-
-          echo "Content of $TEMP_DIR :"
-          ls -R $TEMP_DIR
           
           # Make dir to store publish result and copy
           mkdir -p "$FULL_TARGET_DIR"
@@ -75,8 +72,13 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
           git add .
-          git commit -m "Automatic update of CyzFile-API from latest tag"
-          git push
+          if ! git diff-index --quiet HEAD; then
+            git config --global user.name "GitHub Actions"
+            git config --global user.email "actions@github.com"
+            git commit -m "Automatic update of CyzFile-API from latest tag ($LATEST_TAG)"
+            git push
+          else
+            echo "No changes detected in the API, no commit necessary."
+          fi
+      
