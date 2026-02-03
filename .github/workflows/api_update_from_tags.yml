@@ -40,7 +40,7 @@ jobs:
 
           # Copy compiled files to target dir
           mkdir -p ../$TARGET_DIR
-          cp -r bin/Release/$LATEST_TAG/ ../$TARGET_DIR/
+          cp -r ./bin/Release/$LATEST_TAG/ ../$TARGET_DIR/
 
           # Clean cloned repo
           cd ..
