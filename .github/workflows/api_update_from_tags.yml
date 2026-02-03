@@ -36,11 +36,11 @@ jobs:
 
           # Compile the API (only CyzFile)
           dotnet restore
-          dotnet msbuild CyzFile/CyzFile.vbproj -p:OutputPath=./bin/Release/net8.0/ -p:Configuration=Release
+          dotnet msbuild CyzFile/CyzFile.vbproj -p:OutputPath=./bin/Release/$LATEST_TAG/ -p:Configuration=Release
 
           # Copy compiled files to target dir
           mkdir -p ../$TARGET_DIR
-          cp -r bin/Release/net8.0/publish ../$TARGET_DIR/
+          cp -r bin/Release/$LATEST_TAG/ ../$TARGET_DIR/
 
           # Clean cloned repo
           cd ..
