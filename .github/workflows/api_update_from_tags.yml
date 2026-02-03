@@ -36,7 +36,7 @@ jobs:
 
           # Compile the API (only CyzFile)
           dotnet restore
-          dotnet publish CyzFile/CyzFile.vbproj --configuration Release --framework net8.0 --output ./bin/Release/net8.0/
+          dotnet msbuild CyzFile/CyzFile.vbproj -p:OutputPath=./bin/Release/net8.0/ -p:Configuration=Release
 
           # Copy compiled files to target dir
           mkdir -p ../$TARGET_DIR
