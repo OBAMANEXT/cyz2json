@@ -45,7 +45,7 @@ jobs:
 
           # Make dir to store publish result and copy
           mkdir -p ../../$TARGET_DIR/$LATEST_TAG
-          cp -r ../../temp_build/publish/* ../../$TARGET_DIR/$LATEST_TAG/
+          cp -r ../../temp_dir/publish/* ../../$TARGET_DIR/$LATEST_TAG/
           
           # Clean cloned repo
           cd ..
