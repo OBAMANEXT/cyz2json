@@ -24,10 +24,17 @@ jobs:
           TARGET_DIR=Cyz2Json/CyzFile-API
 
           # Clone API repo
-          git clone --depth 1 --branch $(git ls-remote --tags --sort=-v:refname https://github.com/$REPO_OWNER/$REPO_NAME.git | head -n 1 | cut -d'/' -f3) https://github.com/$REPO_OWNER/$REPO_NAME.git external-repo
+          git clone https://github.com/$REPO_OWNER/$REPO_NAME.git external-repo
+          cd external-repo
+
+          # Get latest tag
+          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "Latest tag found : $LATEST_TAG"
+
+          # Checkout le tag
+          git checkout $LATEST_TAG
 
           # Compile the API (only CyzFile)
-          cd external-repo
           dotnet restore
           dotnet publish CyzFile/CyzFile.vbproj --configuration Release --framework net8.0
 
