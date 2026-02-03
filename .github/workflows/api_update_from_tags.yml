@@ -46,7 +46,7 @@ jobs:
           dotnet restore
 
           # Build + publish with custom MSBuild properties
-          dotnet msbuild CyzFile/CyzFile.vbproj -target:Publish -p:OutputPath=$TEMP_DIR -p:Configuration=Release -p:TargetFramework=net8.0
+          dotnet msbuild CyzFile/CyzFile.vbproj -target:Publish -p:OutputPath=$TEMP_DIR/ -p:Configuration=Release -p:TargetFramework=net8.0
 
           echo "Content of $TEMP_DIR :"
           ls -R $TEMP_DIR
