@@ -36,12 +36,21 @@ jobs:
 
           # Compile the API (only CyzFile)
           dotnet restore
-          mkdir -p ../../$TARGET_DIR/$LATEST_TAG
-          dotnet msbuild CyzFile/CyzFile.vbproj -p:OutputPath=../../$TARGET_DIR/$LATEST_TAG -p:Configuration=Release -p:TargetFramework=net8.0
 
+          # Make temporary dir to store results (build + publish)
+          mkdir -p ../../temp_dir
+
+          # Build + publish with custom MSBuild properties
+          dotnet msbuild CyzFile/CyzFile.vbproj -target:Publish -p:OutputPath=../../temp_dir/ -p:Configuration=Release -p:TargetFramework=net8.0
+
+          # Make dir to store publish result and copy
+          mkdir -p ../../$TARGET_DIR/$LATEST_TAG
+          cp -r ../../temp_build/publish/* ../../$TARGET_DIR/$LATEST_TAG/
+          
           # Clean cloned repo
           cd ..
           rm -rf external-repo
+          rm -rf temp_dir
 
       - name: Commit and push changes
         run: |
