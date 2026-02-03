@@ -57,18 +57,19 @@ jobs:
           # Path to publish dir
           PUBLISH_DIR="$TEMP_DIR/publish"
 
-          echo "Chemin source : $PUBLISH_DIR"
-          echo "Chemin destination : $FULL_TARGET_DIR"
+          echo "Source path : $PUBLISH_DIR"
+          echo "Destination path : $FULL_TARGET_DIR"
           
           if [ -d "$PUBLISH_DIR" ]; then
-            echo "Copie des fichiers depuis $PUBLISH_DIR vers $FULL_TARGET_DIR"
+            echo "Copy files from $PUBLISH_DIR to $FULL_TARGET_DIR"
             cp -r "$PUBLISH_DIR"/* "$FULL_TARGET_DIR/"
           else
-            echo "Erreur : Le dossier source $PUBLISH_DIR n'existe pas."
+            echo "Erreur : The folder $PUBLISH_DIR doesn't exist."
             exit 1
           fi
       
           # Clean temporary folders
+          cd "$GITHUB_WORKSPACE"
           rm -rf "$TEMP_DIR"
           rm -rf external-repo
 
