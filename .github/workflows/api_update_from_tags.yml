@@ -40,12 +40,25 @@ jobs:
           # Build + publish with custom MSBuild properties
           dotnet msbuild CyzFile/CyzFile.vbproj -target:Publish -p:OutputPath=../../temp_dir/ -p:Configuration=Release -p:TargetFramework=net8.0
 
-          echo "Contenu de ../../temp_dir :"
+          echo "Contenu de ../temp_dir :"
           ls -R ../temp_dir
           
           # Make dir to store publish result and copy
           mkdir -p ../../$TARGET_DIR/$LATEST_TAG
-          cp -r ../temp_dir/publish/.* ../../$TARGET_DIR/$LATEST_TAG/
+          
+          SOURCE_DIR=$(pwd)/../temp_dir/publish
+          DEST_DIR=$(pwd)/../../$TARGET_DIR/$LATEST_TAG
+          
+          echo "Chemin source : $SOURCE_DIR"
+          echo "Chemin destination : $DEST_DIR"
+          
+          if [ -d "$SOURCE_DIR" ]; then
+            echo "Copie des fichiers depuis $SOURCE_DIR vers $DEST_DIR"
+            cp -r "$SOURCE_DIR"/. "$DEST_DIR/"
+          else
+            echo "Erreur : Le dossier source $SOURCE_DIR n'existe pas."
+            exit 1
+          fi
           
           # Clean cloned repo
           cd ..
