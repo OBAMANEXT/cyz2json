@@ -21,7 +21,7 @@ jobs:
         run: |
           REPO_OWNER="CytoBuoy"
           REPO_NAME="CyzFile-API"
-          TARGET_DIR=Cyz2Json
+          TARGET_DIR="Cyz2Json"
 
           # Clone API repo
           git clone https://github.com/$REPO_OWNER/$REPO_NAME.git external-repo
@@ -37,7 +37,7 @@ jobs:
           # Compile the API (only CyzFile)
           dotnet restore
           mkdir -p ../../$TARGET_DIR/$LATEST_TAG
-          dotnet msbuild CyzFile/CyzFile.vbproj -p:OutputPath=../../$TARGET_DIR/$LATEST_TAG -p:Configuration=Release
+          dotnet msbuild CyzFile/CyzFile.vbproj -p:OutputPath=../../$TARGET_DIR/$LATEST_TAG -p:Configuration=Release -p:TargetFramework=net8.0
 
           # Clean cloned repo
           cd ..
