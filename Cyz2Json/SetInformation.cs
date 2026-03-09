@@ -33,10 +33,24 @@ namespace Cyz2Json
         /// <returns>The set information, including set definition, and statistics, and the SetsList class with all
         /// the sets that have the information to determine which particles are in the set and which are not.  This can
         /// be used later when exporting per particle data.</returns>
-        public static (SetInformation, SetsList) LoadImagingSetInformation( DataFileWrapper dfw, FileInfo ? setDefinitionFile)
+        /// <remarks>Smartgrid imaging is not supported. When this is encountered the function will report a warning to
+        /// stderr, and return emty definitions.  This will allow processing to continue, but no imaging set information
+        /// will be present in the generated output.</remarks>
+        public static (SetInformation, SetsList?) LoadImagingSetInformation( DataFileWrapper dfw, FileInfo ? setDefinitionFile)
         {
             if (!dfw.MeasurementSettings.IIFCheck) {
-                throw new Exception("Imaging was not used in the datafile, so we cannot export imaging set information!");
+                ReportWarning("Imaging was not used in the datafile, so we cannot export imaging set information!");
+                return (new SetInformation() { definition = "", statistics = [] }, null);
+            }
+
+            if (dfw.MeasurementSettings.IIFuseSmartGrid) {
+                ReportWarning("Smartgrid imaging mode is not supported!");
+                return (new SetInformation() { definition = "", statistics = [] }, null);
+            }
+
+            if (dfw.MeasurementSettings.SelectedIifMode == "Unknown IIF setting") {
+                ReportWarning("Unknown imaging mode is not supported!");
+                return (new SetInformation() { definition = "", statistics = [] }, null);
             }
 
             SetsList imagingSets    = LoadSetsFromDfw(dfw);
@@ -331,7 +345,19 @@ namespace Cyz2Json
             node.SetAttributeNode(attribute);
             return attribute;
         }
+        
+        /// <summary>
+        /// This functions reports a warning to the std error output.  It prepends the label: "WARNING:" and
+        /// then calls WriteLine to actually write it.
+        /// </summary>
+        /// <param name="msg">The warning message to be reported.</param>
+        private static void ReportWarning(string msg)
+        {
+            Console.Error.WriteLine("WARNING: '{0}'", msg);
+        }
 
+
+        
         /// <summary>
         /// Default constructor, private so you cannot instantiate the class, only the public Load function can do so.
         /// </summary>
