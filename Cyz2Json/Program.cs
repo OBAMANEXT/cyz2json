@@ -519,7 +519,7 @@ namespace Cyz2Json
                 {
                     try
                     {
-                        var value = property.ValueProvider.GetValue(instance);
+                        var value = property.ValueProvider?.GetValue(instance);
                         return true;
                     }
                     catch
