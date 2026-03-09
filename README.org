@@ -69,10 +69,18 @@ You can install this tool by typing:
 
 
 The =Cyz2Json= program can then be compiled by cloning the project
-from GitHub and typing =dotnet build -o bin=.
+from GitHub and typing =dotnet build -p:OutputPath=./bin/=.
 The version is based on the git tag.
 
 * Running the program
+
+The program has a set of arguments and options that can be passed to fit the kind of data you need :
++ =input= the cyz file to be converted, mandatory,
++ =--output= the JSON output file,
++ =--raw= Dd not apply the moving weighted average filtering algorithm to pulse shapes, export raw, unsmoothed data,
++ =-V= display version information,
++ =--imaging-set-information= export set information for imaging,
++ =--imaging-set-definition= only if --imaging-set-information is true for file with set definitions, overrides the definitions stored in the file.
 
 The program can be run, on Linux, for example, as follows:
 
@@ -172,6 +180,8 @@ or if you do not want use xattr you need to go in Systems Settings > Security & 
 
 * Notes
 
+** On images
+
 If a CYZ file contains images, we currently base64 encode them and
 include them inline in the JSON. This is costly in terms of disk and
 only time will tell if it is a sensible design decision. A future
@@ -182,13 +192,16 @@ Note that the images are un-cropped. This is an expedience to allow
 cross platform operation (The CyzFile-API only supports cropping on
 Windows platforms).
 
-Cyz2json is using a dll from the CyzFile-API.[https://github.com/Cytobuoy/CyzFile-API]
-At this moment, using version 1.1.4.1 
-To update:
-+ download the net7.0 realease from https://github.com/Cytobuoy/CyzFile-API/releases
+** On the API
+
+Cyz2json is using a dll from the [[https://github.com/Cytobuoy/CyzFile-API/][CyzFile-API]], at this moment, using version 1.6.1.0.
+
+To update you can use the [[https://github.com/LucindaLanoy/cyz2json/blob/main/.github/workflows/api_update_from_tags.yml/][api_update_from_tags.yml]] workflow which fetches the latest version of the API (in tags), you can run it manually or let it work on schedule (15th of each month), in that case, it compares the latest tag with the current version in this repo to choose whether to update or not.
+
+You can also update manually without the workflow, to do so :
++ download the latest net8.0 release from https://github.com/Cytobuoy/CyzFile-API/releases
 + unzip the downloaded file
-+ copy the files from the dll folder to the CyzFile-v1.1.4.1-net7.0 folder
-+ rename the folder to the appropriate version
++ copy the files from the dll folder to the CyzFile-v*-net8.0 folder, with v* the current version of the API
 + rebuild the project.
 
 
