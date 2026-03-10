@@ -1,7 +1,4 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
-name: Build and publish Cyz2Json
+name: Build and release Cyz2Json
 
 on:
   push:
@@ -16,10 +13,6 @@ on:
         description: 'Version tag (e.g. v1.0.0)'
         required: false
         type: string
-      reason:
-        description: 'Reason for manual trigger'
-        required: false
-        default: 'Manual run'
 
 permissions:
   contents: write
@@ -39,13 +32,11 @@ jobs:
       with:
         dotnet-version: 8.0.x
         
-    - name: Restore dependencies
+    - name: Restore dependencies and Build
       shell: bash
-      run: dotnet restore
-      
-    - name: Build
-      shell: bash
-      run: dotnet build --no-restore -p:OutputPath=./bin/
+      run: |
+        dotnet restore
+        dotnet build --no-restore -p:OutputPath=./bin/
       
     - name: Set RID
       id: set-rid
