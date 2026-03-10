@@ -6,13 +6,26 @@ name: Build and publish Cyz2Json
 on:
   push:
     branches: [ "main" ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch: 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v1.0.0)'
+        required: false
+        type: string
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'Manual run'
+
+permissions:
+  contents: write
 
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -27,9 +40,11 @@ jobs:
         dotnet-version: 8.0.x
         
     - name: Restore dependencies
+      shell: bash
       run: dotnet restore
       
     - name: Build
+      shell: bash
       run: dotnet build --no-restore -p:OutputPath=Cyz2Json/bin/
       
     - name: Set RID
@@ -59,3 +74,10 @@ jobs:
           -p:PublishReadyToRun=true \
           -p:OutputPath=Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish
           
+    - name: Create Release Archive
+      shell: bash
+      run: |
+        cd "Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
+        zip -r ../../../../cyz2json-${{ matrix.os }}.zip .
+    
+    
