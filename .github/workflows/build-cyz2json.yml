@@ -49,6 +49,7 @@ jobs:
         esac
         
     - name: Publish
+      shell: bash
       run: |
         dotnet publish \
           -c Release \
