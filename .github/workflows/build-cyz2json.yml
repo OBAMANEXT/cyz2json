@@ -78,10 +78,10 @@ jobs:
       shell: pwsh
       run: |
         if ($env:RUNNER_OS -eq "Windows") {
-          cd ./bin/${{ steps.set-rid.outputs.rid }}/publish
+          cd ./Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish
           7z a ../../../../cyz2json-${{ matrix.os }}.zip ./*
         }
         else {
-          cd ./bin/${{ steps.set-rid.outputs.rid }}/publish
+          cd ./Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish
           zip -r ../../../../cyz2json-${{ matrix.os }}.zip ./*
         }
