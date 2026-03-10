@@ -1,0 +1,60 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: Build Cyz2Json
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch: 
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore -p:OutputPath=Cyz2Json/bin/
+      
+    - name: Set RID
+      id: set-rid
+      shell: bash
+      run: |
+        case "${{ matrix.os }}" in
+          windows-latest) echo "rid=win-x64" >> $GITHUB_OUTPUT ;;
+          ubuntu-latest) echo "rid=linux-x64" >> $GITHUB_OUTPUT ;;
+          macos-latest)
+            if [ "$(uname -m)" = "arm64" ]; then
+              echo "rid=osx-arm64" >> $GITHUB_OUTPUT
+            else
+              echo "rid=osx-x64" >> $GITHUB_OUTPUT
+            fi
+            ;;
+        esac
+        
+    - name: Publish
+      run: |
+        dotnet publish \
+          -c Release \
+          -r ${{ steps.set-rid.outputs.rid }} \
+          --self-contained true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          -p:PublishReadyToRun=true \
+          -p:OutputPath=Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish
+          
