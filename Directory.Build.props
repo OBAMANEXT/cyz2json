@@ -30,7 +30,7 @@
     <PropertyGroup>
       <_FirstVersionLine Condition="'@(VersionLines)' != ''">%(VersionLines.Identity)</_FirstVersionLine>
       <!-- Trim whitespace/newlines -->
-      <_FirstVersionLineTrimmed>$([System.String]::Copy($([System.Text.RegularExpressions.Regex]::Replace('$(_FirstVersionLine)', '^\s+|\s+$', ''))))</_FirstVersionLineTrimmed>
+      <_FirstVersionLineTrimmed>$([System.String]::Copy($([System.Text.RegularExpressions.Regex]::Replace('$(_FirstVersionLine)', '^\s+|\s+$', ''))))</_FirstVersionLineTrimmed>
       <Version Condition="'$(_FirstVersionLineTrimmed)' != ''">$(_FirstVersionLineTrimmed)</Version>
     </PropertyGroup>
   </Target>
