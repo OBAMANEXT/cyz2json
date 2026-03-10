@@ -45,7 +45,7 @@ jobs:
       
     - name: Build
       shell: bash
-      run: dotnet build --no-restore -p:OutputPath=Cyz2Json/bin/
+      run: dotnet build --no-restore -p:OutputPath=./bin/
       
     - name: Set RID
       id: set-rid
@@ -72,7 +72,7 @@ jobs:
           --sc true \
           -p:IncludeNativeLibrariesForSelfExtract=true \
           -p:PublishReadyToRun=true \
-          -p:OutputPath=Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish
+          -p:OutputPath=./bin/${{ steps.set-rid.outputs.rid }}/publish/
           
     - name: Create Release Archive
       shell: bash
