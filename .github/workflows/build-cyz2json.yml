@@ -75,9 +75,11 @@ jobs:
           -p:OutputPath=./bin/${{ steps.set-rid.outputs.rid }}/publish/
           
     - name: Create Release Archive
-      shell: bash
+      shell: pwsh
       run: |
-        cd "Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
-        zip -r ../../../../cyz2json-${{ matrix.os }}.zip ./*
-    
-    
+        if (matrix.os == 'windows-latest') {
+          7z a ../../../../cyz2json-${{ matrix.os }}.zip ./*
+        }
+        else {
+          zip -r ../../../../cyz2json-${{ matrix.os }}.zip ./*
+        }
