@@ -53,7 +53,7 @@ jobs:
         dotnet publish \
           -c Release \
           -r ${{ steps.set-rid.outputs.rid }} \
-          --self-contained true \
+          --sc true \
           -p:IncludeNativeLibrariesForSelfExtract=true \
           -p:PublishReadyToRun=true \
           -p:OutputPath=Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish
