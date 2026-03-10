@@ -78,6 +78,6 @@ jobs:
       shell: bash
       run: |
         cd "Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
-        zip -r ../../../../cyz2json-${{ matrix.os }}.zip .
+        zip -r ../../../../cyz2json-${{ matrix.os }}.zip ./*
     
     
