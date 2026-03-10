@@ -77,7 +77,7 @@ jobs:
     - name: Create Release Archive
       shell: pwsh
       run: |
-        if (matrix.os == 'windows-latest') {
+        if ($env:RUNNER_OS -eq "Windows") {
           7z a ../../../../cyz2json-${{ matrix.os }}.zip ./*
         }
         else {
