@@ -2,8 +2,14 @@ name: Build Cyz2Json
 
 on:
   push:
+    branches:
+      - main
+      - develop
     tags:
       - 'v*'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       version:
@@ -33,44 +39,43 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Write version.txt (Linux / macOS)
-      if: matrix.os != 'windows-latest'
+    - name: Determine Version
+      id: version
       shell: bash
       run: |
-        # priority: workflow_dispatch input > ref_name (tag) > default 0.0.0
-        VERSION="${{ github.event.inputs.version || github.ref_name || '0.0.0' }}"
+        # Version resolution priority:
+        # 1. workflow_dispatch input (if provided)
+        # 2. git tag (if this is a tag push)
+        # 3. PR build with dev version
+        # 4. Branch build with dev version
+        
+        if [ -n "${{ github.event.inputs.version }}" ]; then
+          # Manual workflow dispatch with explicit version
+          VERSION="${{ github.event.inputs.version }}"
+        elif [ "${{ github.ref_type }}" = "tag" ]; then
+          # Tag push - use the tag name
+          VERSION="${{ github.ref_name }}"
+        else
+          # Regular branch/PR build - use dev version
+          VERSION="0.0.0-dev"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            VERSION="${VERSION}-pr${{ github.event.number }}-${{ github.sha }}"
+          else
+            VERSION="${VERSION}-${{ github.sha }}"
+          fi
+        fi
+        
+        # Remove 'v' prefix if present
         VERSION="${VERSION#v}"
-        printf "%s" "$VERSION" > version.txt
-
-    - name: Write version.txt (Windows)
-      if: matrix.os == 'windows-latest'
-      shell: pwsh
-      run: |
-        $version = '${{ github.event.inputs.version }}'
-        if ([string]::IsNullOrEmpty($version)) { $version = '${{ github.ref_name }}' }
-        if ([string]::IsNullOrEmpty($version)) { $version = '0.0.0' }
-        if ($version.StartsWith('v')) { $version = $version.Substring(1) }
-        [System.IO.File]::WriteAllText('version.txt', $version, [System.Text.Encoding]::UTF8)
-
-    - name: Read version.txt into step output (cross-platform)
-      id: read_version
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const fs = require('fs');
-          let version = '0.0.0';
-          try {
-            version = fs.readFileSync('version.txt', 'utf8').trim() || '0.0.0';
-          } catch (e) {
-            // file missing -> keep default
-          }
-          core.setOutput('version', version);
+        
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "Building version: ${VERSION}"
 
     - name: Restore dependencies
-      run: dotnet restore -p:Version=${{ steps.read_version.outputs.version }}
+      run: dotnet restore -p:Version=${{ steps.version.outputs.version }}
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore -p:Version=${{ steps.read_version.outputs.version }}
+      run: dotnet build --configuration Release --no-restore -p:Version=${{ steps.version.outputs.version }}
 
     - name: Set RID
       id: set-rid
@@ -89,36 +94,32 @@ jobs:
         fi
       shell: bash
 
-    - name: Publish (self-contained generic)
-      run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=true -p:Version=${{ steps.read_version.outputs.version }}
-
     - name: Publish (RID-specific output)
-      # Publish into a RID-specific folder so following steps know where to look
-      run: dotnet publish Cyz2Json/Cyz2Json.csproj -c Release -r ${{ steps.set-rid.outputs.rid }} --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=true -p:Version=${{ steps.read_version.outputs.version }} -o Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish
+      run: |
+        dotnet publish Cyz2Json/Cyz2Json.csproj \
+          -c Release \
+          -r ${{ steps.set-rid.outputs.rid }} \
+          --self-contained true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          -p:PublishReadyToRun=true \
+          -p:Version=${{ steps.version.outputs.version }} \
+          -o Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish
 
-    - name: Copy version.txt into publish (Linux / macOS)
+    - name: Copy License File (Linux / macOS)
       if: matrix.os != 'windows-latest'
       shell: bash
       run: |
         publish_dir="Cyz2Json/bin/Release/net8.0/${{ steps.set-rid.outputs.rid }}/publish"
         mkdir -p "$publish_dir"
-        cp version.txt "$publish_dir/"
+        cp LICENSE.txt "$publish_dir/"
 
-    - name: Copy version.txt into publish (Windows)
+    - name: Copy License File (Windows)
       if: matrix.os == 'windows-latest'
       shell: pwsh
       run: |
         $destDir = "Cyz2Json\bin\Release\net8.0\${{ steps.set-rid.outputs.rid }}\publish"
         New-Item -ItemType Directory -Force -Path $destDir | Out-Null
-        Copy-Item version.txt -Destination $destDir
-
-    - name: Copy License File (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        $dest = "Cyz2Json\bin\Release\net8.0\${{ steps.set-rid.outputs.rid }}\publish\"
-        New-Item -ItemType Directory -Force -Path $dest | Out-Null
-        Copy-Item LICENSE.txt -Destination $dest
-      shell: pwsh
+        Copy-Item LICENSE.txt -Destination $destDir
 
     - name: Zip Release Files (Windows)
       if: matrix.os == 'windows-latest'
@@ -135,11 +136,12 @@ jobs:
       shell: bash
 
     - name: Check Release
+      if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
       id: check_release
       uses: actions/github-script@v6
       with:
         script: |
-          const version = '${{ steps.read_version.outputs.version }}';
+          const version = '${{ steps.version.outputs.version }}';
           const reason = '${{ github.event.inputs.reason }}';
           try {
             const release = await github.rest.repos.getReleaseByTag({
@@ -160,6 +162,7 @@ jobs:
           }
 
     - name: Upload Release Asset
+      if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
