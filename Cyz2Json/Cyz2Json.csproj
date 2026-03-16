@@ -6,7 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
-    <GitVersioning>true</GitVersioning>
+    <FileVersion>0.0.0</FileVersion>
+    <AssemblyVersion>$(FileVersion)</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
