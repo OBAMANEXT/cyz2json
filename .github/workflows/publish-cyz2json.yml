@@ -74,6 +74,12 @@ jobs:
           -p:Version=${{ steps.version.outputs.version }} \
           -p:OutputPath=./bin/${{ steps.set-rid.outputs.rid }}/publish/
           
+    - name: Copy Licence
+      shell: bash
+      run: |
+        publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
+        cp LICENSE.txt "$publish_dir/"
+    
     - name: Create Release Archive
       shell: pwsh
       run: |
