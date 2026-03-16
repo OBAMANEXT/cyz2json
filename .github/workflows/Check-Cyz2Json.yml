@@ -3,8 +3,13 @@ name: Test Cyz2Json after changes
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '.github/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '.github/**'
+  workflow_dispatch: 
 
 jobs:
   build:
