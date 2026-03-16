@@ -37,7 +37,7 @@ jobs:
           echo "Latest tag found : $LATEST_TAG"
 
           # Path to result dir
-          FULL_TARGET_DIR="$GITHUB_WORKSPACE/$BASE_TARGET_DIR/REPO_NAME"
+          FULL_TARGET_DIR="$GITHUB_WORKSPACE/$BASE_TARGET_DIR/$REPO_NAME"
 
           # Checkout the tag
           git checkout $LATEST_TAG
