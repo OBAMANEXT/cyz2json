@@ -85,38 +85,39 @@ jobs:
           cd ./Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish
           zip -r ../../../../cyz2json-${{ matrix.os }}.zip ./*
         }
-
-    - name: Check Release
-      id: check_release
-      uses: actions/github-script@v6
+        
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
       with:
-        script: |
-          const version = '${{ steps.version.outputs.version }}';
-          const reason = '${{ github.event.inputs.reason }}';
-          try {
-            const release = await github.rest.repos.getReleaseByTag({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag: version
-            })
-            core.setOutput('upload_url', release.data.upload_url.split('{')[0])
-          } catch (error) {
-            const release = await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: version,
-              name: 'Release ' + version,
-              body: reason
-            })
-            core.setOutput('upload_url', release.data.upload_url.split('{')[0])
-          }
+        name: cyz2json-${{ matrix.os }}
+        path: cyz2json-${{ matrix.os }}.zip
 
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.check_release.outputs.upload_url }}?name=cyz2json-${{ matrix.os }}.zip
-        asset_path: cyz2json-${{ matrix.os }}.zip
-        asset_name: cyz2json-${{ matrix.os }}.zip
-        asset_content_type: application/zip
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Get release version number
+        id: version
+        shell: bash
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          VERSION="${VERSION#v}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          body: ${{ github.event.inputs.reason }}
+          files: |
+            artifacts/cyz2json-ubuntu-latest/cyz2json-ubuntu-latest.zip
+            artifacts/cyz2json-windows-latest/cyz2json-windows-latest.zip
+            artifacts/cyz2json-macos-latest/cyz2json-macos-latest.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
