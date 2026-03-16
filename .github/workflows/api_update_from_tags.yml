@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout of cyz2json
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Installer .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
 
@@ -37,7 +37,7 @@ jobs:
           echo "Latest tag found : $LATEST_TAG"
 
           # Path to result dir
-          FULL_TARGET_DIR="$GITHUB_WORKSPACE/$BASE_TARGET_DIR/$LATEST_TAG"
+          FULL_TARGET_DIR="$GITHUB_WORKSPACE/$BASE_TARGET_DIR/REPO_NAME"
 
           # Checkout the tag
           git checkout $LATEST_TAG
