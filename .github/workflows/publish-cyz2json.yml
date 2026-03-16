@@ -1,4 +1,4 @@
-name: Publish release of Cyz2Json
+name: Publish a release of Cyz2Json
 
 on:
   workflow_dispatch:
