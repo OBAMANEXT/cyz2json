@@ -345,7 +345,7 @@ namespace Cyz2Json
             node.SetAttributeNode(attribute);
             return attribute;
         }
-        
+
         /// <summary>
         /// This functions reports a warning to the std error output.  It prepends the label: "WARNING:" and
         /// then calls WriteLine to actually write it.
@@ -357,7 +357,7 @@ namespace Cyz2Json
         }
 
 
-        
+
         /// <summary>
         /// Default constructor, private so you cannot instantiate the class, only the public Load function can do so.
         /// </summary>
