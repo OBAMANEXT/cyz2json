@@ -1,0 +1,122 @@
+name: Publish release of Cyz2Json
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v1.0.0)'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for release'
+        required: false
+        default: 'Release latest updates'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v6
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Get release version number
+      id: version
+      shell: bash
+      run: |
+        VERSION="${{ github.event.inputs.version }}"
+        VERSION="${VERSION#v}"
+        
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "Building version: ${VERSION}"
+        
+    - name: Restore dependencies and Build
+      shell: bash
+      run: |
+        dotnet restore -p:Version=${{ steps.version.outputs.version }}
+        dotnet build --no-restore -p:OutputPath=./bin/ -p:Version=${{ steps.version.outputs.version }}
+      
+    - name: Set RID
+      id: set-rid
+      shell: bash
+      run: |
+        case "${{ matrix.os }}" in
+          windows-latest) echo "rid=win-x64" >> $GITHUB_OUTPUT ;;
+          ubuntu-latest) echo "rid=linux-x64" >> $GITHUB_OUTPUT ;;
+          macos-latest)
+            if [ "$(uname -m)" = "arm64" ]; then
+              echo "rid=osx-arm64" >> $GITHUB_OUTPUT
+            else
+              echo "rid=osx-x64" >> $GITHUB_OUTPUT
+            fi
+            ;;
+        esac
+        
+    - name: Publish
+      shell: bash
+      run: |
+        dotnet publish \
+          -c Release \
+          -r ${{ steps.set-rid.outputs.rid }} \
+          --sc true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          -p:PublishReadyToRun=true \
+          -p:Version=${{ steps.version.outputs.version }} \
+          -p:OutputPath=./bin/${{ steps.set-rid.outputs.rid }}/publish/
+          
+    - name: Create Release Archive
+      shell: pwsh
+      run: |
+        if ($env:RUNNER_OS -eq "Windows") {
+          cd ./Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish
+          7z a ../../../../cyz2json-${{ matrix.os }}.zip ./*
+        }
+        else {
+          cd ./Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish
+          zip -r ../../../../cyz2json-${{ matrix.os }}.zip ./*
+        }
+
+    - name: Check Release
+      id: check_release
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const version = '${{ steps.version.outputs.version }}';
+          const reason = '${{ github.event.inputs.reason }}';
+          try {
+            const release = await github.rest.repos.getReleaseByTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag: version
+            })
+            core.setOutput('upload_url', release.data.upload_url.split('{')[0])
+          } catch (error) {
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: version,
+              name: 'Release ' + version,
+              body: reason
+            })
+            core.setOutput('upload_url', release.data.upload_url.split('{')[0])
+          }
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.check_release.outputs.upload_url }}?name=cyz2json-${{ matrix.os }}.zip
+        asset_path: cyz2json-${{ matrix.os }}.zip
+        asset_name: cyz2json-${{ matrix.os }}.zip
+        asset_content_type: application/zip
