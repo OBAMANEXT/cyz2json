@@ -1,6 +1,8 @@
 # Cyz2Json - Convert flow cytometry CYZ files to JSON format.
 
+[![Update API from Latest Tag](https://github.com/OBAMANEXT/cyz2json/actions/workflows/API-update-from-tags.yml/badge.svg)](https://github.com/OBAMANEXT/cyz2json/actions/workflows/API-update-from-tags.yml)
 [![Test Cyz2Json after changes](https://github.com/OBAMANEXT/cyz2json/actions/workflows/Check-Cyz2Json.yml/badge.svg)](https://github.com/OBAMANEXT/cyz2json/actions/workflows/Check-Cyz2Json.yml)
+[![Publish a release of Cyz2Json](https://github.com/OBAMANEXT/cyz2json/actions/workflows/Release-Cyz2Json.yml/badge.svg)](https://github.com/OBAMANEXT/cyz2json/actions/workflows/Release-Cyz2Json.yml)
 
 ## Introduction
 
