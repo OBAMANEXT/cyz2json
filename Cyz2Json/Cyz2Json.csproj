@@ -6,7 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
-    <GitVersioning>true</GitVersioning>
+    <Version>1.0.0</Version>
+    <AssemblyInformationalVersion>$(InformationalVersion)</AssemblyInformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,10 +15,7 @@
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="OpenCvSharp4" Version="4.*" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.*" />
-    <!-- <PackageReference Include="OpenCvSharp4.runtime.ubuntu.20.04-x64" Version="4.*" /> -->
-    <!-- <PackageReference Include="OpenCvSharp4.runtime.ubuntu.20.04-x64" Version="4.9.*" /> -->
-    <!-- <PackageReference Include="OpenCvSharp4.runtime.ubuntu.20.04-x64" Version="4.10.0.20241108" /> -->
-    <PackageReference Include="OpenCvSharp4.runtime.ubuntu.20.04-x64" Version="4.6.0.20220608" />
+    <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.*" />
     <PackageReference Include="OpenCvSharp4.runtime.osx.10.15-x64" Version="4.*" />
   </ItemGroup>
 
@@ -26,5 +24,15 @@
       <HintPath>lib\CyzFile.dll</HintPath>
     </Reference>
   </ItemGroup>
+
+  <Target Name="Cyz2JsonGetVersionInfo" BeforeTargets="PrepareForBuild">
+    <Exec Command="git describe --always --long --dirty" ConsoleToMsBuild="True">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitVersion" />
+    </Exec>
+
+    <CreateProperty Value="$(MSBuildProjectName)-$(Version)-$(GitVersion)">
+      <Output PropertyName="InformationalVersion" TaskParameter="Value" />
+    </CreateProperty>
+  </Target>
 
 </Project>

@@ -1,0 +1,61 @@
+name: Test Cyz2Json after changes
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '.github/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '.github/**'
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v6
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: Restore dependencies and Build
+      shell: bash
+      run: |
+        dotnet restore
+        dotnet build --no-restore -p:OutputPath=./bin/
+      
+    - name: Set RID
+      id: set-rid
+      shell: bash
+      run: |
+        case "${{ matrix.os }}" in
+          windows-latest) echo "rid=win-x64" >> $GITHUB_OUTPUT ;;
+          ubuntu-latest) echo "rid=linux-x64" >> $GITHUB_OUTPUT ;;
+          macos-latest)
+            if [ "$(uname -m)" = "arm64" ]; then
+              echo "rid=osx-arm64" >> $GITHUB_OUTPUT
+            else
+              echo "rid=osx-x64" >> $GITHUB_OUTPUT
+            fi
+            ;;
+        esac
+        
+    - name: Publish
+      shell: bash
+      run: |
+        dotnet publish \
+          -c Release \
+          -r ${{ steps.set-rid.outputs.rid }} \
+          --sc true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          -p:PublishReadyToRun=true \
+          -p:OutputPath=./bin/${{ steps.set-rid.outputs.rid }}/publish/
+        echo "Build succeeded !"

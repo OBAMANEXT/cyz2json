@@ -6,16 +6,17 @@
 // Copyright(c) 2023 Centre for Environment, Fisheries and Aquaculture Science.
 //
 
-using CytoSense.Data;
 using CytoSense.CytoSettings;
+using CytoSense.Data;
+using CytoSense.Data.Analysis;
 using CytoSense.Data.ParticleHandling;
 using CytoSense.Data.ParticleHandling.Channel;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using OpenCvSharp;
 using System.CommandLine;
-// using OpenCvSharp;
+using System.CommandLine.Parsing;
 using System.Reflection;
-using CytoSense.Data.Analysis;
 
 
 // Design decisions:
@@ -45,8 +46,6 @@ namespace Cyz2Json
 {
     internal class Program
     {
-
-
         static void HandleVersion()
         {
             var version = Assembly.GetExecutingAssembly().GetName().Version;
@@ -56,38 +55,13 @@ namespace Cyz2Json
 
         static void Main(string[] args)
         {
-            var inputArgument = new Argument<FileInfo>(
-                "input",
-                description: "CYZ input file");
-
-            var outputOption = new Option<FileInfo>(
-                "--output",
-                description: "JSON output file");
-
-            var rawOption = new Option<bool>(
-                name: "--raw",
-                description: "Do not apply the moving weighted average filtering algorithm to pulse shapes. Export raw, unsmoothed data.");
-
-            var metadatagreedyOption = new Option<bool>(
-                name: "--metadatagreedy",
-                description: "Save all possible measurement settings with your file (default: true)",
-                getDefaultValue: () => true);
-
-            var versionOption = new Option<bool>(
-                name: "-V",
-                // new[] { "-V", "--version" },
-                description: "Display version information");
-
-
-            var setInformationOption = new Option<bool>(
-                name: "--imaging-set-information",
-                description: "Export set information for imaging"
-            );
-
-            var setDefinitionOverride = new Option<FileInfo>(
-                name: "--imaging-set-definition",
-                description: "File with set definitions, overrides the definitions stored in the file."
-            ).ExistingOnly();
+            var inputArgument         = new Argument<FileInfo>( name: "input",                     description: "CYZ input file");
+            var outputOption          = new Option<FileInfo>(   name: "--output",                  description: "JSON output file");
+            var rawOption             = new Option<bool>(       name: "--raw",                     description: "Do not apply the moving weighted average filtering algorithm to pulse shapes. Export raw, unsmoothed data.");
+            var metadatagreedyOption  = new Option<bool>(       name: "--metadatagreedy",          description: "Save all possible measurement settings with your file (default: true)", getDefaultValue: () => true);
+            var versionOption         = new Option<bool>(       name: "-V",                        description: "Display version information");
+            var setInformationOption  = new Option<bool>(       name: "--imaging-set-information", description: "Export set information for imaging" );
+            var setDefinitionOverride = new Option<FileInfo>(   name: "--imaging-set-definition",  description: "File with set definitions, overrides the definitions stored in the file." ).ExistingOnly();
 
             setDefinitionOverride.AddValidator( result  => { 
                 if ( ! result.GetValueForOption(setInformationOption) ) {
@@ -95,37 +69,83 @@ namespace Cyz2Json
                 }
             });
 
+            var imageProcessing = new Option<bool>( name: "--image-processing", description: "Perform cropping and image processing during the export of the image.", getDefaultValue: () => false                );
+
+            var imageProcessingThreshold             = new Option<int>(  name: "--image-processing-threshold",               description: "The minimum pixel value difference from the background to be considered an object.", getDefaultValue: () => 9);
+            var imageProcessingErosionDilation       = new Option<int>(  name: "--image-processing-erosion-dilation",        description: "The size of the erosion/dilation filter to apply after thresholding.",               getDefaultValue: () => 1);
+            var imageProcessingBrightFieldCorrection = new Option<bool>( name: "--image-processing-bright-field-correction", description: "Correct the image for variation in the lighting.",                                   getDefaultValue: () => true);
+            var imageProcessingMarginBase            = new Option<int>(  name: "--image-processing-margin-base",             description: "Add a marging of this many pixels around the detected object.",                      getDefaultValue: () => 25 );
+            var imageProcessingMarginPercentage      = new Option<int>(  name: "--image-processing-margin-percentage",       description: "Add an extra margin that is a percentage of the size of the detected object.",       getDefaultValue: () => 10 );
+            var imageProcessingExtendObjectDetection = new Option<bool>( name: "--image-processing-extend-object-detection", description: "When seperate objects are detected close (in the margin) of the main object then extend the rectangle to include these objects as well.", getDefaultValue: () => true );
+
+
 
             var rootCommand = new RootCommand("Convert CYZ files to JSON")
             {
-                inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption, setInformationOption, setDefinitionOverride
+                inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption, 
+                setInformationOption, setDefinitionOverride,
+                imageProcessing,
+                imageProcessingThreshold, imageProcessingErosionDilation,
+                imageProcessingBrightFieldCorrection,
+                imageProcessingMarginBase, imageProcessingMarginPercentage,
+                imageProcessingExtendObjectDetection
             };
 
-            // rootCommand.SetHandler(Convert, inputArgument, outputOption, rawOption, metadatagreedyOption);
-            rootCommand.SetHandler((FileInfo input, FileInfo output, bool raw, bool metadatagreedy, bool version, bool setInformation, FileInfo setDefinitionFile) =>
-
-
-            {
-                if (version)
-                {
-                    HandleVersion();
-                    return;
-                }
-                Convert(input, output, raw, metadatagreedy, setInformation, setDefinitionFile);
-            }, inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption, setInformationOption, setDefinitionOverride);
-
             rootCommand.TreatUnmatchedTokensAsErrors = false;
-            rootCommand.Invoke(args);
+
+            ParseResult parseResult = rootCommand.Parse(args);
+            if (parseResult.Errors.Count == 0)
+            {
+                FileInfo input                    = parseResult.GetValueForArgument(inputArgument);
+                FileInfo output                   = parseResult.GetValueForOption(outputOption)!;
+                bool     raw                      = parseResult.GetValueForOption(rawOption)!;
+                bool     metadatagreedy           = parseResult.GetValueForOption(metadatagreedyOption)!;
+                bool     version                  = parseResult.GetValueForOption(versionOption)!;
+                bool     setInformation           = parseResult.GetValueForOption(setInformationOption)!;
+                FileInfo setDefinitionFile        = parseResult.GetValueForOption(setDefinitionOverride)!;
+                bool     processImages            = parseResult.GetValueForOption(imageProcessing);
+                int      imgThreshold             = parseResult.GetValueForOption(imageProcessingThreshold);
+                int      imgErosionDilation       = parseResult.GetValueForOption(imageProcessingErosionDilation);
+                bool     imgBrightFieldCorrection = parseResult.GetValueForOption(imageProcessingBrightFieldCorrection);
+                int      imgMarginBase            = parseResult.GetValueForOption(imageProcessingMarginBase);
+                int      imgMarginPercentage      = parseResult.GetValueForOption(imageProcessingMarginPercentage);
+                bool     imgExtendObjectDetection = parseResult.GetValueForOption(imageProcessingExtendObjectDetection);
+
+
+                ImageProcessingOptions imgOpts = new() { Process=processImages, Threshold=imgThreshold, ErosionDilation=imgErosionDilation, BrightFieldCorrection=imgBrightFieldCorrection,
+                                                         MarginBase=imgMarginBase, MarginPercentage=imgMarginPercentage, ExtendObjectDetection=imgExtendObjectDetection};
+
+
+                Convert(input, output, raw, metadatagreedy, setInformation, setDefinitionFile, imgOpts);
+            }
+            foreach (ParseError parseError in parseResult.Errors)
+            {
+                Console.Error.WriteLine(parseError.Message);
+            }
+            // rootCommand.Invoke(args);
         }
 
+        private record struct ImageProcessingOptions(bool Process, int Threshold, int ErosionDilation, bool BrightFieldCorrection, int MarginBase, int MarginPercentage, bool ExtendObjectDetection);
+
+        private static CytoImage.ImageProcessingSettings ToImgProcSettings(ImageProcessingOptions options)
+        {
+            return new CytoImage.ImageProcessingSettings {
+                Threshold                  = options.Threshold,
+                ErosionDilation            = options.ErosionDilation,
+                ApplyBrightFieldCorrection = options.BrightFieldCorrection,
+                MarginBase                 = options.MarginBase,
+                MarginFactor               = options.MarginPercentage/100.0,
+                ExtendObjectDetection      = options.ExtendObjectDetection
+            };
+        }
 
         /// <summary>
         /// Convert the flow cytometry data in the file designated by cyzFilename to Javscript Object Notation (JSON).
         /// If jsonFilename is null, echo the JSON to the console, otherwise store it a file designated by jsonFilename.
         /// </summary>
-        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw, bool metadatagreedy, bool setInformation, FileInfo setDefinitionFile)
+        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw, bool metadatagreedy, bool setInformation, FileInfo setDefinitionFile, ImageProcessingOptions imgOpts)
         {
-            var data = LoadData(cyzFilename.FullName, isRaw, metadatagreedy, setInformation, setDefinitionFile);
+            var data = LoadData(cyzFilename.FullName, isRaw, metadatagreedy, setInformation, setDefinitionFile, imgOpts);
 
             StreamWriter streamWriter;
 
@@ -147,7 +167,7 @@ namespace Cyz2Json
         /// <summary>
         /// Load all the flow cytometry data from the CYZ file designated by pathname.
         /// </summary>
-        private static Dictionary<string, object> LoadData(string pathname, bool isRaw, bool metadatagreedy, bool setInformation, FileInfo setDefinitionFile)
+        private static Dictionary<string, object> LoadData(string pathname, bool isRaw, bool metadatagreedy, bool setInformation, FileInfo setDefinitionFile, ImageProcessingOptions imgOpts)
         {
             var data = new Dictionary<string, object>();
 
@@ -183,8 +203,7 @@ namespace Cyz2Json
             }
 
             data["particles"] = LoadParticles(dfw, isRaw, sets);
-            data["images"] = LoadImages(dfw);
-            // data["crop_images"] = LoadCropImages(dfw);
+            data["images"]    = LoadImages(dfw, imgOpts);
 
             return data;
         }
@@ -444,71 +463,85 @@ namespace Cyz2Json
             return measurementResults;
         }
 
-        private static List<Dictionary<string, object>> LoadImages(DataFileWrapper dfw)
+
+        /// <summary>
+        /// Very simple strtucutre we use to represent a cropping rectangle during the JSON generation.
+        /// The x,y, cordinates are the location of the top left, adn width and height indicate the size.
+        /// </summary>
+        /// <param name="X">X value of TOP left.</param>
+        /// <param name="Y">Y value of TOP left.</param>
+        /// <param name="Width">Width of the cropped image.</param>
+        /// <param name="Height">Height of the cropped image.</param>
+        private record struct CroppingRectangle(int X, int Y, int Width, int Height);
+
+        /// <summary>
+        /// Convert a n open CV rectangle to our own structure, with only the 4 values we want, this makes the JSON that is output a bit
+        /// shorter, nicer, and easier to understand.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <returns>The CroppingRectangle equivalent of the OpenCV rect.</returns>
+        private static CroppingRectangle ToCroppingRectangle(OpenCvSharp.Rect rect)
+        {
+            return new CroppingRectangle { X = rect.X, Y = rect.Y, Width = rect.Width, Height = rect.Height };
+        }
+
+        /// <summary>
+        /// Get the cropping rectangle for the image.  If the image is not cropped then we will simply return the
+        /// entire size of the image as a rectangle.
+        /// </summary>
+        /// <param name="img"></param>
+        /// <returns></returns>
+        private static CroppingRectangle GetCroppingRectangle(CytoImage img)
+        {
+            if (img.IsCropped) {
+                return ToCroppingRectangle(img.CropRect);
+            } else  {
+                var imgMat = img.ImageMat;
+                return new CroppingRectangle { X = 0, Y = 0, Width = imgMat.Width, Height = imgMat.Height };
+            }
+        }
+
+        /// <summary>
+        /// Load the image into memory in a format (base64) that can be exported to JSON easily.  Depending on the
+        /// image processing options this can be the complete unprocessed image, or we can do object detection
+        /// and cropping on the fly during the export process.
+        /// </summary>
+        /// <param name="dfw"></param>
+        /// <param name="imgOpts"></param>
+        /// <returns></returns>
+        private static List<Dictionary<string, object>> LoadImages(DataFileWrapper dfw, ImageProcessingOptions imgOpts)
         {
             var images = new List<Dictionary<string, object>>();
+
+            int[] param = [ (int)ImwriteFlags.JpegQuality, 95 ];
 
             foreach (var particle in dfw.SplittedParticlesWithImages)
             {
                 var image = new Dictionary<string, object>();
 
-                string base64String;
-
-                using (MemoryStream memoryStream = new MemoryStream())
+                if (particle.ImageHandling?.ImageStream?.Length > 0)
                 {
-                    if (particle.ImageHandling?.ImageStream?.Length > 0)
-                    {
-                        particle.ImageHandling.ImageStream.Position = 0;
-                        particle.ImageHandling?.ImageStream?.CopyTo(memoryStream);
-                        base64String = System.Convert.ToBase64String(memoryStream.ToArray());
-                        image["particleId"] = particle.ID;
-                        image["base64"] = base64String;
+                    image["particleId"] = particle.ID;
 
-                        images.Add(image);
+                    if (imgOpts.Process) {
+                        var img_rect = particle.ImageHandling.GetCroppedImageWithRect(ToImgProcSettings(imgOpts));
+                        Cv2.ImEncode(".jpeg", img_rect.Item1, out byte[]? buff, param);
+                        image["base64"]        =  System.Convert.ToBase64String(buff!);
+                        image["cropRectangle"] = ToCroppingRectangle(img_rect.Item2);
                     }
-
+                    else {
+                        particle.ImageHandling.ImageStream.Position = 0;
+                        using (MemoryStream memoryStream = new MemoryStream()) {
+                            particle.ImageHandling?.ImageStream?.CopyTo(memoryStream);
+                            image["base64"] = System.Convert.ToBase64String(memoryStream.ToArray());
+                        }
+                        image["cropRectangle"] = GetCroppingRectangle(particle.ImageHandling!);
+                    }
+                    images.Add(image);
                 }
             }
             return images;
         }
-
-        // private static List<Dictionary<string, object>> LoadCropImages(DataFileWrapper dfw)
-        // {
-        //     var crop_images = new List<Dictionary<string, object>>();
-
-        //     foreach (var particle in dfw.SplittedParticlesWithImages)
-        //     {
-        //         var crop_image = new Dictionary<string, object>();
-
-        //         string base64String = string.Empty;
-
-        //         var crpImg = particle.ImageHandling.GetCroppedImage(25, 1.1, 7, 1);
-                
-        //         if (particle.ImageHandling.CropResult == CytoImage.CropResultEnum.CropOK)
-        //         { 
-        //             // Create a byte array to store the encoded image
-        //             byte[] encodedImage;
-
-        //             // Encode the cropped image as JPG and store the result in the byte array
-        //             Cv2.ImEncode(".jpg", crpImg, out encodedImage);
-
-        //             // Convert the byte array to Base64 string
-        //             base64String = System.Convert.ToBase64String(encodedImage);
-
-        //         }
-        //         else // there was a problem cropping the image, examine the result enum to see what the problem was.
-        //         {
-        //             Console.WriteLine($"{particle.ID}: Cropping failed ('{particle.ImageHandling.CropResult}')");
-        //         }
-
-
-        //         crop_image["particleId"] = particle.ID;
-        //         crop_image["base64"] = base64String;
-
-        //         crop_images.Add(crop_image);
-        //     }
-        //     return crop_images;
-        // }
 
         public class IgnoreErrorPropertiesResolver : DefaultContractResolver
         {
@@ -519,7 +552,7 @@ namespace Cyz2Json
                 {
                     try
                     {
-                        var value = property.ValueProvider.GetValue(instance);
+                        var value = property!.ValueProvider!.GetValue(instance);
                         return true;
                     }
                     catch
