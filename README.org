@@ -16,34 +16,6 @@ This program uses the [[https://github.com/Cytobuoy/CyzFile-API][CytoBuoy CyzFil
 
 * Build instructions
 
-** Build with GitHub actions
-
-Commit your code and push it to GitHub.
-then add a tag to the commit and push it to GitHub. like the sample below
-#+begin_src
-git tag v0.0.50 && git push origin v0.0.50
-#+end_src
-the action will build the binary and push it to the release
-
-You will find result in : https://github.com/ecotaxa/cyz2json/actions
-and release in : https://github.com/ecotaxa/cyz2json/releases
-
-
-
-** Build with Docker
-Only build cyz2json for Linux
-
-First build a container to build the program:
-#+begin_src
-docker build -t cyz2json-builder .     
-#+end_src
-
-Then run the container to build the cyz2json tool:
-#+begin_src
-docker run -v $(pwd):/src cyz2json-builder bash -c "dotnet publish -c Release --self-contained true -r linux-x64"     
-#+end_src
-
-
 ** Build on the PC
 
 ** Installation
@@ -67,20 +39,45 @@ To generate the version number, you will need to install the =nbgv= tool.
 You can install this tool by typing:
 =dotnet tool install -g nbgv=
 
-
 The =Cyz2Json= program can then be compiled by cloning the project
 from GitHub and typing =dotnet build -p:OutputPath=./bin/=.
-The version is based on the git tag.
+The default version is the one given by the [[https://github.com/OBAMANEXT/cyz2json/blob/main/Cyz2Json/Cyz2Json.csproj/][Cyz2Json.csproj]] file (unless passed directly during build via -p:Version), the assembly informal version is  "Cyz2Json-the current Version-the latest Git SHA".
+
+** Build with GitHub actions
+
+The [[https://github.com/OBAMANEXT/cyz2json/blob/main/.github/workflows/Release-Cyz2Json.yml/][Release-Cyz2Json.yml]] workflow can be triggered manually to build and publish a release of the tool with cross platform binaries. A tag is required to be used as the release and tool version (replacing the default one), and a reason for the release can be given as well though it is not mandatory.
+
+You will find the result in : https://github.com/OBAMANEXT/cyz2json/actions and release in : https://github.com/OBAMANEXT/cyz2json/releases
+
+To install from release, download the release for you platfrom, and unpack on your folder choice.
+
+*** On MacOSX
+You will need to bypass security 
+You have 2 possibilities :
+using xattr command.
+for exmaple:
+#+begin_src bash
+xattr -d com.apple.quarantine  /opt/cytosense_to_ecotaxa_pipeline/bin/*
+#+end_src
+or if you do not want to use xattr you need to go in Systems Settings > Security & Privacy > General and allow the app to be opened for the 10+ libraries. You need to relauch sevaral time the cyz2json binary to acheive all neccessary permissions.
 
 * Running the program
 
 The program has a set of arguments and options that can be passed to fit the kind of data you need :
 + =input= the cyz file to be converted, mandatory,
 + =--output= the JSON output file,
-+ =--raw= Dd not apply the moving weighted average filtering algorithm to pulse shapes, export raw, unsmoothed data,
++ =--raw= to not apply the moving weighted average filtering algorithm to pulse shapes, export raw, unsmoothed data,
 + =-V= display version information,
-+ =--imaging-set-information= export set information for imaging,
-+ =--imaging-set-definition= only if --imaging-set-information is true for file with set definitions, overrides the definitions stored in the file.
++ =--metadatagreedy= save all possible measurement settings with your file, default = true,
++ =--imaging-set-information= to export set information for imaging,
++ =--imaging-set-definition= to override the definitions stored in the file, only if --imaging-set-information is true for file with set definitions, 
++ =--image-processing= to perform cropping and image processing during the export of the image, default = false, this comes along with several other arguments to adjust the processing options :
++ =--image-processing-threshold= the minimum pixel value difference from the background to be considered an object, default = 9,
++ =--image-processing-erosion-dilation= the size of the erosion/dilation filter to apply after thresholding, default = 1,
++ =--image-processing-bright-field-correction= correct the image for variation in the lighting, default = true,
++ =--image-processing-margin-base= add a marging of this many pixels around the detected object, default = 25,
++ =--image-processing-margin-percentage= add an extra margin that is a percentage of the size of the detected object, default = 10,
++ =--image-processing-extend-object-detection= when seperate objects are detected close (in the margin) of the main object then extend the rectangle to include these objects as well, default = true.
 
 The program can be run, on Linux, for example, as follows:
 
@@ -93,7 +90,6 @@ Running with executable loaded from github
 export cyzversion=v0.0.49
 rm -rf cyz2json/* && curl -L -o cyz2json/cyz2json.zip https://github.com/ecotaxa/cyz2json/releases/download/$cyzversion/cyz2json-ubuntu-latest.zip && pushd cyz2json && unzip cyz2json.zip && popd && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:. && cyz2json/Cyz2Json ./Deployment\ 1\ 2024-07-18\ 21h12.cyz --metadatagreedy=false --output ./Deployment\ 1\ 2024-07-18\ 21h12.json
 #+end_src
-
 
 On Windows
 
@@ -116,8 +112,6 @@ or
 #+begin_src bash
 Cyz2Json.exe input.cyz --output output.json
 #+end_src
-
-
 
 * Bulk file conversion
 
@@ -162,22 +156,6 @@ print(json_data)
 
 #+end_src
 
-# Installation
-## from Release
-
-Download the release for you platfrom, and unpack on your folder choice.
-
-### On MacOSX
-You will need to bypass security 
-You have 2 possibilities :
-using xattr command.
-for exmaple:
-```
-xattr -d com.apple.quarantine  /opt/cytosense_to_ecotaxa_pipeline/bin/*
-```
-or if you do not want use xattr you need to go in Systems Settings > Security & Privacy > General and allow the app to be opened for the 10+ libraries. You need to relauch sevaral time the cyz2json binary to acheive all neccessary permissions.
-
-
 * Notes
 
 ** On images
@@ -188,7 +166,8 @@ only time will tell if it is a sensible design decision. A future
 enhancement would be to include a flag that writes the files out as
 JPEG images.
 
-Note that the images are un-cropped. This is an expedience to allow
+Note that the images are un-cropped by default. The =--image-processing= option can now be used to process and crop images when exporting. 
+Initially, the tool didn't support cropping as an expedience to allow
 cross platform operation (The CyzFile-API only supports cropping on
 Windows platforms).
 
@@ -196,14 +175,13 @@ Windows platforms).
 
 Cyz2json is using a dll from the [[https://github.com/Cytobuoy/CyzFile-API/][CyzFile-API]], at this moment, using version 1.6.1.0.
 
-To update you can use the [[https://github.com/LucindaLanoy/cyz2json/blob/main/.github/workflows/api_update_from_tags.yml/][api_update_from_tags.yml]] workflow which fetches the latest version of the API (in tags), you can run it manually or let it work on schedule (15th of each month), in that case, it compares the latest tag with the current version in this repo to choose whether to update or not.
+To update you can use the [[https://github.com/OBAMANEXT/cyz2json/blob/main/.github/workflows/API-update-from-tags.yml/][API-update-from-tags.yml]] workflow which fetches the latest version of the API (in tags), you can run it manually or let it work on schedule (15th of each month), in that case, it compares the latest tag with the current version in this repo to choose whether to update or not.
 
 You can also update manually without the workflow, to do so :
-+ download the latest net8.0 release from https://github.com/Cytobuoy/CyzFile-API/releases
-+ unzip the downloaded file
-+ copy the files from the dll folder to the CyzFile-v*-net8.0 folder, with v* the current version of the API
++ download the latest net8.0 release from https://github.com/Cytobuoy/CyzFile-API/releases,
++ unzip the downloaded file,
++ copy the files from the dll folder to the CyzFile folder,
 + rebuild the project.
-
 
 * Acknowledgements
 
