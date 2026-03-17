@@ -3,7 +3,7 @@ name: Update API from Latest Tag
 on:
   workflow_dispatch:  
   schedule:
-    - cron: '0 2 15 * *'  
+    - cron: '10 10 17 * *'  
 
 jobs:
   update-api:
