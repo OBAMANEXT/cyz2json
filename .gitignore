@@ -1,2 +1,4 @@
 /Cyz2Json/bin/
 /Cyz2Json/obj/
+**/obj/
+**/packages/
