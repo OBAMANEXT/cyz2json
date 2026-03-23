@@ -84,11 +84,8 @@ jobs:
         dotnet publish \
           -c Release \
           -r ${{ steps.set-rid.outputs.rid }} \
-          --sc true \
-          -p:IncludeNativeLibrariesForSelfExtract=true \
-          -p:PublishReadyToRun=true \
           -p:Version=${{ steps.version.outputs.version }} \
-          -p:OutputPath=./bin/${{ steps.set-rid.outputs.rid }}/publish/
+          -p:OutputPath=./bin/${{ steps.set-rid.outputs.rid }}/
           
     - name: Copy Licence
       shell: bash
