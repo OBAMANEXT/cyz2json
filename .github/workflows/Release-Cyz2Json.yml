@@ -101,6 +101,7 @@ jobs:
       shell: bash
       run: |
         publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
+        mkdir -p $publish_dir/runtimes/linux-x64/native
         sudo find /usr/lib/x86_64-linux-gnu/ -maxdepth 1 -name "libavcodec.so*" -exec cp {} $publish_dir/runtimes/linux-x64/native/ \;
         sudo find /usr/lib/x86_64-linux-gnu/ -maxdepth 1 -name "libavformat.so*" -exec cp {} $publish_dir/runtimes/linux-x64/native/ \;
         sudo find /usr/lib/x86_64-linux-gnu/ -maxdepth 1 -name "libavutil.so*" -exec cp {} $publish_dir/runtimes/linux-x64/native/ \;
