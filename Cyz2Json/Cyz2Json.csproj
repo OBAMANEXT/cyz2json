@@ -13,7 +13,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <AssemblyInformationalVersion>$(InformationalVersion)</AssemblyInformationalVersion>
   </PropertyGroup>
 
