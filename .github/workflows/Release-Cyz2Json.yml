@@ -30,6 +30,22 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
+    - name: Install OpenCvSharp dependencies for Linux
+      if: matrix.os == 'ubuntu-latest'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libgtk-3-dev \
+          libtesseract-dev \
+          libavcodec-dev \
+          libavformat-dev \
+          libavutil-dev \
+          libswscale-dev \
+          libopenexr-dev \
+          libtiff-dev \
+          patchelf
+
     - name: Get release version number
       id: version
       shell: bash
@@ -68,18 +84,44 @@ jobs:
         dotnet publish \
           -c Release \
           -r ${{ steps.set-rid.outputs.rid }} \
-          --sc true \
-          -p:IncludeNativeLibrariesForSelfExtract=true \
-          -p:PublishReadyToRun=true \
           -p:Version=${{ steps.version.outputs.version }} \
-          -p:OutputPath=./bin/${{ steps.set-rid.outputs.rid }}/publish/
+          -p:OutputPath=./bin/${{ steps.set-rid.outputs.rid }}/
           
     - name: Copy Licence
       shell: bash
       run: |
         publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
         cp LICENSE.txt "$publish_dir/"
-    
+
+    - name: Copy OpenCvSharp native libraries for Linux
+      if: matrix.os == 'ubuntu-latest'
+      shell: bash
+      run: |
+        publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
+        mkdir -p $publish_dir/runtimes/linux-x64/native
+        sudo find /usr/lib/x86_64-linux-gnu/ -maxdepth 1 -name "libavcodec.so*" -exec cp {} $publish_dir/runtimes/linux-x64/native/ \;
+        sudo find /usr/lib/x86_64-linux-gnu/ -maxdepth 1 -name "libavformat.so*" -exec cp {} $publish_dir/runtimes/linux-x64/native/ \;
+        sudo find /usr/lib/x86_64-linux-gnu/ -maxdepth 1 -name "libavutil.so*" -exec cp {} $publish_dir/runtimes/linux-x64/native/ \;
+        sudo find /usr/lib/x86_64-linux-gnu/ -maxdepth 1 -name "libswscale.so*" -exec cp {} $publish_dir/runtimes/linux-x64/native/ \;
+        sudo find /usr/lib/x86_64-linux-gnu/ -maxdepth 1 -name "libtesseract.so*" -exec cp {} $publish_dir/runtimes/linux-x64/native/ \;
+        sudo find /usr/lib/x86_64-linux-gnu/ -maxdepth 1 -name "libgtk-3.so*" -exec cp {} $publish_dir/runtimes/linux-x64/native/ \;
+        sudo find /usr/lib/x86_64-linux-gnu/ -maxdepth 1 -name "libtiff.so*" -exec cp {} $publish_dir/runtimes/linux-x64/native/ \;
+        sudo find /usr/lib/x86_64-linux-gnu/ -maxdepth 1 -name "libIlmImf-2_5.so*" -exec cp {} $publish_dir/runtimes/linux-x64/native/ \;
+
+    - name: Patch ELF to use local libraries
+      if: matrix.os == 'ubuntu-latest'
+      shell: bash
+      run: |
+        publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
+        patchelf --set-rpath '$ORIGIN/runtimes/linux-x64/native' $publish_dir/libOpenCvSharpExtern.so
+        patchelf --replace-needed libavcodec.so.58 libavcodec.so.59 $publish_dir/libOpenCvSharpExtern.so || true
+        patchelf --replace-needed libavformat.so.58 libavformat.so.59 $publish_dir/libOpenCvSharpExtern.so || true
+        patchelf --replace-needed libavutil.so.56 libavutil.so.57 $publish_dir/libOpenCvSharpExtern.so || true
+        patchelf --replace-needed libswscale.so.5 libswscale.so.6 $publish_dir/libOpenCvSharpExtern.so || true
+        patchelf --replace-needed libtesseract.so.4 libtesseract.so.5 $publish_dir/libOpenCvSharpExtern.so || true
+        patchelf --replace-needed libgtk-x11-2.0.so.0 libgtk-3.so.0 $publish_dir/libOpenCvSharpExtern.so || true
+        patchelf --replace-needed libgdk-x11-2.0.so.0 libgdk-3.so.0 $publish_dir/libOpenCvSharpExtern.so || true
+      
     - name: Create Release Archive
       shell: pwsh
       run: |
