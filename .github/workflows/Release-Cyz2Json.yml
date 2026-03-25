@@ -75,9 +75,6 @@ jobs:
     - name: Restore dependencies and Build
       shell: bash
       run: |
-        if [ ${{ steps.set-rid.outputs.rid }} = "osx-arm64" ]; then
-          dotnet add package OpenCvSharp4.runtime.osx_arm64 -v "4.*" --project Cyz2Json/Cyz2Json.csproj
-        fi
         dotnet restore -p:Version=${{ steps.version.outputs.version }}
         dotnet build --no-restore -p:OutputPath=./bin/ -p:Version=${{ steps.version.outputs.version }}
         
