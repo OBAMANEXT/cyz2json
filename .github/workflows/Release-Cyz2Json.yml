@@ -55,12 +55,6 @@ jobs:
         
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         echo "Building version: ${VERSION}"
-        
-    - name: Restore dependencies and Build
-      shell: bash
-      run: |
-        dotnet restore -p:Version=${{ steps.version.outputs.version }}
-        dotnet build --no-restore -p:OutputPath=./bin/ -p:Version=${{ steps.version.outputs.version }}
       
     - name: Set RID
       id: set-rid
@@ -77,6 +71,12 @@ jobs:
             fi
             ;;
         esac
+
+    - name: Restore dependencies and Build
+      shell: bash
+      run: |
+        dotnet restore -p:Version=${{ steps.version.outputs.version }}
+        dotnet build --no-restore -p:OutputPath=./bin/ -p:Version=${{ steps.version.outputs.version }}
         
     - name: Publish
       shell: bash
