@@ -126,6 +126,8 @@ jobs:
             install_name_tool -change "@executable_path/../libs/$dep" "@executable_path/$dep" OpenCvSharpExtern.dylib
           fi
         done
+        echo "New libs path"
+        otool -L OpenCvSharpExtern.dylib
     
     - name: Create Release Archive
       shell: pwsh
