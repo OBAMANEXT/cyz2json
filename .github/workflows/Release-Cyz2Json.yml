@@ -92,7 +92,38 @@ jobs:
       run: |
         publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
         cp LICENSE.txt "$publish_dir/"
-      
+
+    - name: Create symlink for OpenCvSharpExtern.dylib
+      if: matrix.os == 'macos-latest'
+      shell: bash
+      run: |
+        publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
+        cd $publish_dir/
+        ln -sf libOpenCvSharpExtern.dylib OpenCvSharpExtern.dylib
+
+    - name: Fix library path (macOS)
+      if: matrix.os == 'macos-latest'
+      shell: bash
+      run: |
+        publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
+        cd $publish_dir/
+        # Get dependencies to fix (starting with @executable_path/../libs)
+        deps=$(
+          otool -L OpenCvSharpExern.dylib |
+          grep "@executable_path/../libs/" |
+          sed -E 's/\(.*\)//' |
+          awk -F'/' '{print $NF}' |
+          sort |
+          uniq
+        )
+        # Fix paths
+        for dep in $deps; do
+          if [ -n "$dep" ]; then
+            echo "Fixing path for $dep..."
+            install_name_tool -change "@executable_path/../libs/$dep" "@executable_path/$dep" OpenCvSharpExtern.dylib
+          fi
+        done
+    
     - name: Create Release Archive
       shell: pwsh
       run: |
