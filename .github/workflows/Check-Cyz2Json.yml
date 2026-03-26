@@ -83,7 +83,32 @@ jobs:
         cd $publish_dir/
         # Create symlink to redirect calls to OpenCvSharpExtern.dylib to libOpenCvSharpExtern.dylib (the file actually created)
         ln -sf libOpenCvSharpExtern.dylib OpenCvSharpExtern.dylib
-        cd ../../..
+
+    - name: Fix library path (macOS)
+      if: matrix.os == 'macos-latest'
+      shell: bash
+      run: |
+        publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
+        cd $publish_dir/
+        # Native libs are searched in @executable_path/../libs/ by default but this folder doesn't exist
+        # Get dependencies to fix (starting with @executable_path/../libs)
+        deps=$(
+          otool -L OpenCvSharpExtern.dylib |
+          grep "@executable_path/../libs/" |
+          sed -E 's/\(.*\)//' |
+          awk -F'/' '{print $NF}' |
+          sort |
+          uniq
+        )
+        # Fix paths
+        for dep in $deps; do
+          if [ -n "$dep" ]; then
+            echo "Fixing path for $dep..."
+            install_name_tool -change "@executable_path/../libs/$dep" "@executable_path/$dep" OpenCvSharpExtern.dylib
+          fi
+        done
+        echo "New libs path"
+        otool -L OpenCvSharpExtern.dylib
 
     - name: Run executable
       shell: bash
@@ -92,9 +117,5 @@ jobs:
         file="$exmpl_path/sample.cyz"
         dll_path="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish/Cyz2Json.dll"
         bn=$(basename "$file")
-        # if macOS, use env var to look for native dependencies inside publish dir (or else it will throw an error)
-        if [ "${{ matrix.os }}" == "macos-latest" ]; then
-          export DYLD_FALLBACK_LIBRARY_PATH=$(dirname $dll_path)
-        fi
         dotnet $dll_path "$file" --imaging-set-information --image-processing --output $exmpl_path/"$bn".json
         echo "File successfully converted !"
