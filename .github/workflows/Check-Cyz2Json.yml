@@ -83,6 +83,7 @@ jobs:
         cd $publish_dir/
         # Create symlink to redirect calls to OpenCvSharpExtern.dylib to libOpenCvSharpExtern.dylib (the file actually created)
         ln -sf libOpenCvSharpExtern.dylib OpenCvSharpExtern.dylib
+        cd ../../..
 
     - name: Run executable
       shell: bash
@@ -91,6 +92,9 @@ jobs:
         file="$exmpl_path/sample.cyz"
         dll_path="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish/Cyz2Json.dll"
         bn=$(basename "$file")
-        export DYLD_FALLBACK_LIBRARY_PATH=$(dirname $dll_path)
+        # if macOS, use env var to look for native dependencies inside publish dir (or else it will throw an error)
+        if ${{ matrix.os }} == 'macos-latest'
+          export DYLD_FALLBACK_LIBRARY_PATH=$(dirname $dll_path)
+        fi
         dotnet $dll_path "$file" --imaging-set-information --image-processing --output $exmpl_path/"$bn".json
         echo "File successfully converted !"
