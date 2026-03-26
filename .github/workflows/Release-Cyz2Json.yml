@@ -94,58 +94,24 @@ jobs:
         publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
         cp LICENSE.txt "$publish_dir/"
 
-    - name: Prepare asset directory
-      shell: bash
-      run: |
-        cd Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/
-        mkdir -p asset
-        mv publish asset/
-
     - name: Create symlink for OpenCvSharpExtern.dylib
       if: matrix.os == 'macos-latest'
       shell: bash
       run: |
-        publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/asset/publish"
+        publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
         cd $publish_dir/
         # Create symlink to redirect calls to OpenCvSharpExtern.dylib to libOpenCvSharpExtern.dylib (the file actually created)
         ln -sf libOpenCvSharpExtern.dylib OpenCvSharpExtern.dylib
 
-    - name: Fix library path (macOS)
-      if: matrix.os == 'macos-latest'
-      shell: bash
-      run: |
-        publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/asset/publish"
-        cd $publish_dir/
-        # Native libs are searched in @executable_path/../libs/ by default but this folder doesn't exist
-        # Get dependencies to fix (starting with @executable_path/../libs)
-        deps=$(
-          otool -L OpenCvSharpExtern.dylib |
-          grep "@executable_path/../libs/" |
-          sed -E 's/\(.*\)//' |
-          awk -F'/' '{print $NF}' |
-          sort |
-          uniq
-        )
-        # Move those libs to the newly created libs folder
-        mkdir -p ../libs
-        for dep in $deps; do
-          if [ -n "$dep" ]; then
-            echo "Moving $dep to ../libs/"
-            mv "$dep" "../libs/"
-          fi
-        done
-        echo "Libs path"
-        otool -L OpenCvSharpExtern.dylib
-    
     - name: Create Release Archive
       shell: pwsh
       run: |
         if ($env:RUNNER_OS -eq "Windows") {
-          cd ./Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/asset
+          cd ./Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish
           7z a ../../../../cyz2json-${{ matrix.os }}.zip ./*
         }
         else {
-          cd ./Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/asset
+          cd ./Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish
           zip -r ../../../../cyz2json-${{ matrix.os }}.zip ./*
         }
         

@@ -27,13 +27,24 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 8.0.x
-        
-    - name: Restore dependencies and Build
+
+    - name: Install OpenCvSharp dependencies for Linux
+      if: matrix.os == 'ubuntu-latest'
       shell: bash
       run: |
-        dotnet restore
-        dotnet build --no-restore -p:OutputPath=./bin/
-      
+        # Dependencies needed on Linux
+        # They need to be installed here to avoid compiling the project with outdated versions which won't be found locally
+        sudo apt-get update
+        sudo apt-get install -y \
+          libgtk-3-dev \
+          libtesseract-dev \
+          libavcodec-dev \
+          libavformat-dev \
+          libavutil-dev \
+          libswscale-dev \
+          libopenexr-dev \
+          libtiff-dev
+        
     - name: Set RID
       id: set-rid
       shell: bash
@@ -49,6 +60,12 @@ jobs:
             fi
             ;;
         esac
+
+    - name: Restore dependencies and Build
+      shell: bash
+      run: |
+        dotnet restore
+        dotnet build --no-restore -p:OutputPath=./bin/
         
     - name: Publish
       shell: bash
@@ -56,8 +73,28 @@ jobs:
         dotnet publish \
           -c Release \
           -r ${{ steps.set-rid.outputs.rid }} \
-          --sc true \
-          -p:IncludeNativeLibrariesForSelfExtract=true \
-          -p:PublishReadyToRun=true \
-          -p:OutputPath=./bin/${{ steps.set-rid.outputs.rid }}/publish/
-        echo "Build succeeded !"
+          -p:OutputPath=./bin/${{ steps.set-rid.outputs.rid }}/
+
+    - name: Create symlink for OpenCvSharpExtern.dylib
+      if: matrix.os == 'macos-latest'
+      shell: bash
+      run: |
+        publish_dir="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish"
+        cd $publish_dir/
+        # Create symlink to redirect calls to OpenCvSharpExtern.dylib to libOpenCvSharpExtern.dylib (the file actually created)
+        ln -sf libOpenCvSharpExtern.dylib OpenCvSharpExtern.dylib
+        cd ../../..
+
+    - name: Run executable
+      shell: bash
+      run: |
+        exmpl_path="examples/data/"
+        file="$exmpl_path/sample.cyz"
+        dll_path="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish/Cyz2Json.dll"
+        bn=$(basename "$file")
+        # if macOS, use env var to look for native dependencies inside publish dir (or else it will throw an error)
+        if [ "${{ matrix.os }}" == "macos-latest" ]; then
+          export DYLD_FALLBACK_LIBRARY_PATH=$(dirname $dll_path)
+        fi
+        dotnet $dll_path "$file" --imaging-set-information --image-processing --output $exmpl_path/"$bn".json
+        echo "File successfully converted !"

@@ -119,6 +119,49 @@ or
 Cyz2Json.exe input.cyz --output output.json
 ```
 
+## Troubleshooting 
+### On OpenCvSharpExtern
+
+You may run into the `System.DllNotFoundException: Unable to load shared library 'OpenCvSharpExtern' or one of its dependencies.` when trying to run the program. In that case, either the library OpenCvSharpExtern and/or its dependencies are missing or the path to load them is wrong.  Here are a few steps to help you deal with this problem if you ever run into it.
+
+#### Linux
+
+The `libOpenCvSharpExtern.so` library should be exported by the `OpenCvSharp4.official.runtime.linux-x64` nugget package and found either in the latest release asset or in your local build results. It is statically linked to its dependencies which are not themselves exported. Most of those libraries are pre-installed in standard ubuntu distributions, but can be missing in minimal environment/containers. Besides, if you are using the latest release asset, the version of the dependencies you have locally might not be compatible with the versions linked to the library exported in the asset (should be latest "dev" versions).
+
+To fix this, the easiest way is to :
+- move to your binaries folder (either the downloaded asset or the result of the local build) and run the `ldd libOpenCvSharpExtern.so` command, this will list all statically linked dependencies and highlight missing ones as "not found",
+- then update and/or install those libraries.
+
+Example of installation :
+```
+sudo apt-get update
+sudo apt-get install -y \
+  libgtk-3-dev \
+  libtesseract-dev \
+  libavcodec-dev \
+  libavformat-dev \
+  libavutil-dev \
+  libswscale-dev \
+  libopenexr-dev \
+  libtiff-dev
+```
+
+#### macOS
+
+The `libOpenCvSharpExtern.dylib` library should be exported with its dependencies either by the `OpenCvSharp4.runtime.osx.10.15-x64` or the `OpenCvSharp4.runtime.osx_arm64` nugget packages. A [known issue](https://github.com/shimat/opencvsharp/issues/1797) with the macOS (arm64) version of the library is its hard dependency on the `@executable_path/../dirs` path, basically, it looks for native dependencies in this folder, that doesn't exist, instead of the folder where they are actually exported (the same as the `libOpenCvSharpExtern.dylib` file). You can check that by running the command `otool -L libOpenCvSharpExtern.dylib` and see the list of all dependencies and where the program will search them.
+
+The easiest way to deal with this issue is by using an environment variable (via a shell script) :
+```
+#!/usr/bin/env bash
+dll_path="bin/Cyz2Json.dll"
+export DYLD_FALLBACK_LIBRARY_PATH=$(dirname $dll_path)
+dotnet $dll_path input.cyz --output output.json
+```
+
+This will tell the program to try the path given by `DYLD_FALLBACK_LIBRARY_PATH` if all other (wrong) paths fail. In the example above, the native libraries are located in the same folder as the Cyz2Json.dll (dll_path), if it is not the case for you (for example they are in `runtimes/osx-arm64/native/` folder) then simply modify the script to match your local directory structure.
+
+Another issue is that the program is looking for an `OpenCvSharpExtern.dylib` file instead of the correct `libOpenCvSharpExtern.dylib`. The easiest way to correct this error is by creating a symlink : `ln -sf libOpenCvSharpExtern.dylib OpenCvSharpExtern.dylib` so any call to `OpenCvSharpExtern.dylib` will redirect to `libOpenCvSharpExtern.dylib`. The symlink was already created for the latest release asset and should be preserved.
+
 ### Bulk file conversion
 
 We often find ourselves needing to undertake a bulk conversion of a
