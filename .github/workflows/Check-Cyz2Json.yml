@@ -104,7 +104,7 @@ jobs:
         for dep in $deps; do
           if [ -n "$dep" ]; then
             echo "Fixing path for $dep..."
-            install_name_tool -change "@executable_path/../libs/$dep" "@executable_path/$dep" OpenCvSharpExtern.dylib
+            install_name_tool -change "@executable_path/../libs/$dep" "@rpath/$dep" OpenCvSharpExtern.dylib
           fi
         done
         echo "New libs path"
