@@ -126,6 +126,6 @@ jobs:
         expl_file="$exmpl_path/sample.cyz"
         dll_path="./publish/Cyz2Json.dll"
         bn=$(basename "$expl_file")
-        export DYLD_FALLBACK_LIBRARY_PATH=$(dirname "$0")
+        export DYLD_FALLBACK_LIBRARY_PATH=$(dirname $dll_path)
         dotnet $dll_path "$expl_file" --imaging-set-information --image-processing --output $exmpl_path/"$bn".json
         echo "File successfully converted !"
