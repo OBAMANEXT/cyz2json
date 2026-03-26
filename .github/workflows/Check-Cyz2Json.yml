@@ -93,7 +93,7 @@ jobs:
         dll_path="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish/Cyz2Json.dll"
         bn=$(basename "$file")
         # if macOS, use env var to look for native dependencies inside publish dir (or else it will throw an error)
-        if ${{ matrix.os }} == 'macos-latest'
+        if [ "${{ matrix.os }}" == "macos-latest" ]; then
           export DYLD_FALLBACK_LIBRARY_PATH=$(dirname $dll_path)
         fi
         dotnet $dll_path "$file" --imaging-set-information --image-processing --output $exmpl_path/"$bn".json
