@@ -170,7 +170,7 @@ This problem is machine specific, check with the command `ulimit -a` that your `
 To bypass those problems, you can :
 - temporarily set the virtual memory to unlimited `ulimit -v unlimited`,
 - or temporarily change the overcommit mode to 1 (or 0) `echo 1 | sudo tee /proc/sys/vm/overcommit_memory`,
-- you can also set an environment variable to temporarily lower the memory usage of the program (but be mindful of the value used if it is too small) : `export DOTNET_GCHeapHardLimit=1C0000000`
+- you can also set an environment variable to temporarily lower the memory usage of the program (but be mindful of the value used if it is too small) : `export DOTNET_GCHeapHardLimit=1C0000000`.
 
 ### Bulk file conversion
 
