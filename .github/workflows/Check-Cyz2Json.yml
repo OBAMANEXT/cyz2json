@@ -99,23 +99,6 @@ jobs:
         cd $publish_dir/
         # Native libs are searched in @executable_path/../libs/ by default but this folder doesn't exist
         # Get dependencies to fix (starting with @executable_path/../libs)
-        deps=$(
-          otool -L OpenCvSharpExtern.dylib |
-          grep "@executable_path/../libs/" |
-          sed -E 's/\(.*\)//' |
-          awk -F'/' '{print $NF}' |
-          sort |
-          uniq
-        )
-        # Move those libs to the newly created libs folder
-        mkdir -p ../libs
-        for dep in $deps; do
-          if [ -n "$dep" ]; then
-            echo "Moving $dep to ../libs/"
-            mv "$dep" "../libs/"
-          fi
-        done
-        echo "Libs path"
         otool -L OpenCvSharpExtern.dylib
 
     - name: Run executable
@@ -124,8 +107,8 @@ jobs:
         cd Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/executable/
         exmpl_path="../../../../examples/data/"
         expl_file="$exmpl_path/sample.cyz"cd ./
-        dll_path="./publish/"
+        dll_path="./publish/Cyz2Json.dll"
         bn=$(basename "$expl_file")
         export DYLD_FALLBACK_LIBRARY_PATH=$(dirname $dll_path)
-        dotnet $dll_path/Cyz2Json.dll "$expl_file" --imaging-set-information --image-processing --output $exmpl_path/"$bn".json
+        dotnet $dll_path "$expl_file" --imaging-set-information --image-processing --output $exmpl_path/"$bn".json
         echo "File successfully converted !"
