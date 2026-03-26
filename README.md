@@ -6,12 +6,9 @@
 
 ## Introduction
 
-This program converts flow cytometry data stored in a CytoBuoy CYZ
-format file to JSON format.
+This program converts flow cytometry data stored in a CytoBuoy CYZ format file to JSON format.
 
-Although CYZ files work with the Cytobuoy supplied CytoClus program,
-we want to access the data from a wider set of data science tooling
-including Python and R. We therefore convert to JSON.
+Although CYZ files work with the Cytobuoy supplied CytoClus program, we want to access the data from a wider set of data science tooling including Python and R. We therefore convert to JSON.
 
 This program uses the [CytoBuoy CyzFile API](https://github.com/Cytobuoy/CyzFile-API) and targets the Microsoft
 .NET 8 framework on Windows, macOS or Linux.
@@ -22,8 +19,7 @@ This program uses the [CytoBuoy CyzFile API](https://github.com/Cytobuoy/CyzFile
 
 #### Installation
 The first step is to install the Microsoft dotnet runtime version 8.
-Microsoft provides detailed instructions at
-https://learn.microsoft.com/en-us/dotnet/core/install/.
+Microsoft provides detailed instructions at https://learn.microsoft.com/en-us/dotnet/core/install/.
 
 For example, installation on Linux Ubuntu 22.04 is as follows:
 
@@ -41,8 +37,7 @@ To generate the version number, you will need to install the `nbgv` tool.
 You can install this tool by typing:
 `dotnet tool install -g nbgv`
 
-The `Cyz2Json` program can then be compiled by cloning the project
-from GitHub and typing `dotnet build -p:OutputPath=./bin/`.
+The `Cyz2Json` program can then be compiled by cloning the project from GitHub and typing `dotnet build -p:OutputPath=./bin/`.
 The default version is the one given by the [Cyz2Json.csproj](https://github.com/OBAMANEXT/cyz2json/blob/main/Cyz2Json/Cyz2Json.csproj/) file (unless passed directly during build via -p:Version), the assembly informal version is  "Cyz2Json-the current Version-the latest Git SHA".
 
 ### Build with GitHub actions
@@ -162,10 +157,24 @@ This will tell the program to try the path given by `DYLD_FALLBACK_LIBRARY_PATH`
 
 Another issue is that the program is looking for an `OpenCvSharpExtern.dylib` file instead of the correct `libOpenCvSharpExtern.dylib`. The easiest way to correct this error is by creating a symlink : `ln -sf libOpenCvSharpExtern.dylib OpenCvSharpExtern.dylib` so any call to `OpenCvSharpExtern.dylib` will redirect to `libOpenCvSharpExtern.dylib`. The symlink was already created for the latest release asset and should be preserved.
 
+### On Garbage Collector
+
+You may run into the following error on Linux when trying to execute the problem : 
+```
+GC heap initialization failed with error 0x8007000E
+Failed to create CoreCLR, HRESULT: 0x8007000E`
+```
+
+This problem is machine specific, check with the command `ulimit -a` that your `virtual memory` and `max memory size` are set either to `unlimited` or a large number. You can also check `cat /proc/sys/vm/overcommit_memory`, the value should be 0 (overcommit reasonable memory request on the heuristics base, default) or 1 (always overcommit). If it is set to 2 then it means never overcommit.
+
+To bypass those problems, you can :
+- temporarily set the virtual memory to unlimited `ulimit -v unlimited`,
+- or temporarily change the overcommit mode to 1 (or 0) `echo 1 | sudo tee /proc/sys/vm/overcommit_memory`,
+- you can also set an environment variable to temporarily lower the memory usage of the program (but be mindful of the value used if it is too small) : `export DOTNET_GCHeapHardLimit=1C0000000`
+
 ### Bulk file conversion
 
-We often find ourselves needing to undertake a bulk conversion of a
-large set of files. The following shell script can help:
+We often find ourselves needing to undertake a bulk conversion of a large set of files. The following shell script can help:
 
 ```
 #!/usr/bin/env bash
@@ -188,9 +197,7 @@ data = json.load(open("pond.json", encoding="utf-8-sig"))
 print(data)
 ```
 
-Note the need to explicitly specify the encoding to deal with
-Microsoft's and Python's differences in interpretation of the
-standards regarding byte order marks in UTF-8 files.
+Note the need to explicitly specify the encoding to deal with Microsoft's and Python's differences in interpretation of the standards regarding byte order marks in UTF-8 files.
 
 ### R example
 
@@ -207,16 +214,10 @@ print(json_data)
 
 ### On images
 
-If a CYZ file contains images, we currently base64 encode them and
-include them inline in the JSON. This is costly in terms of disk and
-only time will tell if it is a sensible design decision. A future
-enhancement would be to include a flag that writes the files out as
-JPEG images.
+If a CYZ file contains images, we currently base64 encode them and include them inline in the JSON. This is costly in terms of disk and only time will tell if it is a sensible design decision. A future enhancement would be to include a flag that writes the files out as JPEG images.
 
 Note that the images are un-cropped by default. The `--image-processing` option can now be used to process and crop images when exporting. 
-Initially, the tool didn't support cropping as an expedience to allow
-cross platform operation (The CyzFile-API only supports cropping on
-Windows platforms).
+Initially, the tool didn't support cropping as an expedience to allow cross platform operation (The CyzFile-API only supports cropping on Windows platforms).
 
 ### On the API
 
@@ -225,7 +226,7 @@ Cyz2json is using a dll from the [CyzFile-API](https://github.com/Cytobuoy/CyzFi
 To update you can use the [API-update-from-tags.yml](https://github.com/OBAMANEXT/cyz2json/blob/main/.github/workflows/API-update-from-tags.yml/) workflow which fetches the latest version of the API (in tags), you can run it manually or let it work on schedule (15th of each month), in that case, it compares the latest tag with the current version in this repo to choose whether to update or not.
 
 You can also update manually without the workflow, to do so :
-- download the latest net8.0 release from https://github.com/Cytobuoy/CyzFile-API/releases,
+- download the latest release from https://github.com/Cytobuoy/CyzFile-API/releases,
 - unzip the downloaded file,
 - copy the files from the dll folder to the CyzFile folder,
 - rebuild the project.
@@ -242,9 +243,7 @@ My thanks to the following organisations for supporting this work:
 
 [CytoBuoy b.v.](https://www.cytobuoy.com/)
 
-I am grateful to Rob Lievaart at Cytobuoy for providing the libraries,
-code and examples on which this software is based. The CyzFile-API is
-licensed under the terms described in CyzFile-API_LICENSE.TXT.
+I am grateful to Rob Lievaart at Cytobuoy for providing the libraries, code and examples on which this software is based. The CyzFile-API is licensed under the terms described in CyzFile-API_LICENSE.TXT.
 
 Thanks to Eric Payne at Cefas for Visual Studio wizardry.
 
