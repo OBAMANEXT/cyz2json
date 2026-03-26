@@ -106,7 +106,7 @@ jobs:
       run: |
         cd Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/executable/
         exmpl_path="../../../../examples/data/"
-        expl_file="$exmpl_path/sample.cyz"cd ./
+        expl_file="$exmpl_path/sample.cyz"
         dll_path="./publish/Cyz2Json.dll"
         bn=$(basename "$expl_file")
         export DYLD_FALLBACK_LIBRARY_PATH=$(dirname $dll_path)
