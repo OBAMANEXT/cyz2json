@@ -121,6 +121,7 @@ jobs:
     - name: Run executable
       shell: bash
       run: |
+        cd Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/executable/
         exmpl_path="examples/data/"
         expl_file="$exmpl_path/sample.cyz"
         dll_path="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/executable/publish/Cyz2Json.dll"
