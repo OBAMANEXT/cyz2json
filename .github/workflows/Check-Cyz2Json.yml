@@ -89,7 +89,7 @@ jobs:
       shell: bash
       run: |
         exmpl_path="examples/data/"
-        file="$exmpl_path/sample.cyz"
+        file="$exmpl_path/SeineMO_Microphoto_station02_flr26_2ul_8min 2024-05-04 07h54_SubSet.cyz"
         dll_path="Cyz2Json/bin/${{ steps.set-rid.outputs.rid }}/publish/Cyz2Json.dll"
         bn=$(basename "$file")
         # if macOS, use env var to look for native dependencies inside publish dir (or else it will throw an error)
