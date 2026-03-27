@@ -221,7 +221,7 @@ Initially, the tool didn't support cropping as an expedience to allow cross plat
 
 ### On the API
 
-Cyz2json is using a dll from the [CyzFile-API](https://github.com/Cytobuoy/CyzFile-API), at this moment, using version 1.6.1.0.
+Cyz2json is using a dll from the [CyzFile-API](https://github.com/Cytobuoy/CyzFile-API).
 
 To update you can use the [API-update-from-tags.yml](https://github.com/OBAMANEXT/cyz2json/blob/main/.github/workflows/API-update-from-tags.yml/) workflow which fetches the latest version of the API (in tags), you can run it manually or let it work on schedule (15th of each month), in that case, it compares the latest tag with the current version in this repo to choose whether to update or not.
 
