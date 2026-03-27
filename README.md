@@ -159,13 +159,13 @@ Another issue is that the program is looking for an `OpenCvSharpExtern.dylib` fi
 
 ### On Garbage Collector
 
-You may run into the following error on Linux when trying to execute the problem : 
+You may run into the following error on Linux when trying to execute the program : 
 ```
 GC heap initialization failed with error 0x8007000E
 Failed to create CoreCLR, HRESULT: 0x8007000E`
 ```
 
-This problem is machine specific, check with the command `ulimit -a` that your `virtual memory` and `max memory size` are set either to `unlimited` or a large number. You can also check `cat /proc/sys/vm/overcommit_memory`, the value should be 0 (overcommit reasonable memory request on the heuristics base, default) or 1 (always overcommit). If it is set to 2 then it means never overcommit.
+This problem is machine specific, check with the command `ulimit -a` that your `virtual memory` and `max memory size` are set either to `unlimited` or a large enough number. You can also check `cat /proc/sys/vm/overcommit_memory`, the value should be 0 (overcommit reasonable memory request on the heuristics base, default) or 1 (always overcommit). If it is set to 2 then it means never overcommit.
 
 To bypass those problems, you can :
 - temporarily set the virtual memory to unlimited `ulimit -v unlimited`,
