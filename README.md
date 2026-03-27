@@ -114,6 +114,18 @@ or
 Cyz2Json.exe input.cyz --output output.json
 ```
 
+### Bulk file conversion
+
+We often find ourselves needing to undertake a bulk conversion of a large set of files. The following shell script can help:
+
+```
+#!/usr/bin/env bash
+for file in *.cyz
+do
+    dotnet ~/git/Cyz2Json/bin/Cyz2Json.dll "$file" --output "$file".json
+done
+```
+
 ## Troubleshooting 
 ### On OpenCvSharpExtern
 
@@ -171,18 +183,6 @@ To bypass those problems, you can :
 - temporarily set the virtual memory to unlimited `ulimit -v unlimited`,
 - or temporarily change the overcommit mode to 1 (or 0) `echo 1 | sudo tee /proc/sys/vm/overcommit_memory`,
 - you can also set an environment variable to temporarily lower the memory usage of the program (but be mindful of the value used if it is too small) : `export DOTNET_GCHeapHardLimit=1C0000000`.
-
-### Bulk file conversion
-
-We often find ourselves needing to undertake a bulk conversion of a large set of files. The following shell script can help:
-
-```
-#!/usr/bin/env bash
-for file in *.cyz
-do
-    dotnet ~/git/Cyz2Json/bin/Cyz2Json.dll "$file" --output "$file".json
-done
-```
 
 ## Processing CYZ JSON files 
 
