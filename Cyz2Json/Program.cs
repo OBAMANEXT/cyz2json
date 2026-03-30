@@ -59,7 +59,7 @@ namespace Cyz2Json
             var outputOption          = new Option<FileInfo>(   name: "--output",                  description: "JSON output file");
             var rawOption             = new Option<bool>(       name: "--raw",                     description: "Do not apply the moving weighted average filtering algorithm to pulse shapes. Export raw, unsmoothed data.");
             var metadatagreedyOption  = new Option<bool>(       name: "--metadatagreedy",          description: "Save all possible measurement settings with your file (default: true)", getDefaultValue: () => true);
-            var versionOption         = new Option<bool>(       name: "-V",                        description: "Display version information");
+            var versionOption         = new Option<bool>(       name: "--version",                 description: "Display version information");
             var setInformationOption  = new Option<bool>(       name: "--imaging-set-information", description: "Export set information for imaging" );
             var setDefinitionOverride = new Option<FileInfo>(   name: "--imaging-set-definition",  description: "File with set definitions, overrides the definitions stored in the file." ).ExistingOnly();
 
@@ -116,6 +116,11 @@ namespace Cyz2Json
                                                          MarginBase=imgMarginBase, MarginPercentage=imgMarginPercentage, ExtendObjectDetection=imgExtendObjectDetection};
 
 
+                if (version)
+                {
+                    HandleVersion();
+                    return;
+                }
                 Convert(input, output, raw, metadatagreedy, setInformation, setDefinitionFile, imgOpts);
             }
             foreach (ParseError parseError in parseResult.Errors)
