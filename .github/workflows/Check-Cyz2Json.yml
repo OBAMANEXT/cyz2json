@@ -98,5 +98,5 @@ jobs:
         if [ "${{ matrix.os }}" == "macos-latest" ]; then
           export DYLD_FALLBACK_LIBRARY_PATH=$(dirname $dll_path)
         fi
-        dotnet $dll_path "$file" --imaging-set-information --image-processing --output $exmpl_path/"$bn".json
+        dotnet $dll_path "$file" --imaging-set-information --image-processing --output $exmpl_path/"$bn".json --version
         echo "File successfully converted !"
