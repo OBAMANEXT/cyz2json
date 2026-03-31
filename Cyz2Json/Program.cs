@@ -55,11 +55,16 @@ namespace Cyz2Json
 
         static void Main(string[] args)
         {
+            if (args.Contains("--version"))
+            {
+                HandleVersion();
+                return;
+            }
+
             var inputArgument         = new Argument<FileInfo>( name: "input",                     description: "CYZ input file");
             var outputOption          = new Option<FileInfo>(   name: "--output",                  description: "JSON output file");
             var rawOption             = new Option<bool>(       name: "--raw",                     description: "Do not apply the moving weighted average filtering algorithm to pulse shapes. Export raw, unsmoothed data.");
             var metadatagreedyOption  = new Option<bool>(       name: "--metadatagreedy",          description: "Save all possible measurement settings with your file (default: true)", getDefaultValue: () => true);
-            var versionOption         = new Option<bool>(       name: "--version",                 description: "Display version information");
             var setInformationOption  = new Option<bool>(       name: "--imaging-set-information", description: "Export set information for imaging" );
             var setDefinitionOverride = new Option<FileInfo>(   name: "--imaging-set-definition",  description: "File with set definitions, overrides the definitions stored in the file." ).ExistingOnly();
 
@@ -82,7 +87,7 @@ namespace Cyz2Json
 
             var rootCommand = new RootCommand("Convert CYZ files to JSON")
             {
-                inputArgument, outputOption, rawOption, metadatagreedyOption, versionOption, 
+                inputArgument, outputOption, rawOption, metadatagreedyOption,
                 setInformationOption, setDefinitionOverride,
                 imageProcessing,
                 imageProcessingThreshold, imageProcessingErosionDilation,
@@ -95,9 +100,9 @@ namespace Cyz2Json
 
             ParseResult parseResult = rootCommand.Parse(args);
 
-            if (parseResult.GetValueForOption(versionOption))
+            if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?"))
             {
-                HandleVersion();
+                rootCommand.Invoke("--help");
                 return;
             }
 
@@ -107,6 +112,7 @@ namespace Cyz2Json
                 {
                     Console.Error.WriteLine(parseError.Message);
                 }
+                rootCommand.Invoke("--help");
                 return;
             }
 
