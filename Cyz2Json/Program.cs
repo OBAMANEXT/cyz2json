@@ -50,7 +50,7 @@ namespace Cyz2Json
         {
             var version = Assembly.GetExecutingAssembly().GetName().Version;
             var informationalVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-            Console.WriteLine($"Cyz2Json version {informationalVersion ?? version?.ToString()}");
+            Console.WriteLine($"{informationalVersion ?? version?.ToString()}");
         }
 
         static void Main(string[] args)
@@ -94,40 +94,48 @@ namespace Cyz2Json
             rootCommand.TreatUnmatchedTokensAsErrors = false;
 
             ParseResult parseResult = rootCommand.Parse(args);
-            if (parseResult.Errors.Count == 0)
+
+            if (parseResult.GetValueForOption(versionOption))
             {
-                FileInfo input                    = parseResult.GetValueForArgument(inputArgument);
-                FileInfo output                   = parseResult.GetValueForOption(outputOption)!;
-                bool     raw                      = parseResult.GetValueForOption(rawOption)!;
-                bool     metadatagreedy           = parseResult.GetValueForOption(metadatagreedyOption)!;
-                bool     version                  = parseResult.GetValueForOption(versionOption)!;
-                bool     setInformation           = parseResult.GetValueForOption(setInformationOption)!;
-                FileInfo setDefinitionFile        = parseResult.GetValueForOption(setDefinitionOverride)!;
-                bool     processImages            = parseResult.GetValueForOption(imageProcessing);
-                int      imgThreshold             = parseResult.GetValueForOption(imageProcessingThreshold);
-                int      imgErosionDilation       = parseResult.GetValueForOption(imageProcessingErosionDilation);
-                bool     imgBrightFieldCorrection = parseResult.GetValueForOption(imageProcessingBrightFieldCorrection);
-                int      imgMarginBase            = parseResult.GetValueForOption(imageProcessingMarginBase);
-                int      imgMarginPercentage      = parseResult.GetValueForOption(imageProcessingMarginPercentage);
-                bool     imgExtendObjectDetection = parseResult.GetValueForOption(imageProcessingExtendObjectDetection);
+                HandleVersion();
+                return;
+            }
 
-
-                ImageProcessingOptions imgOpts = new() { Process=processImages, Threshold=imgThreshold, ErosionDilation=imgErosionDilation, BrightFieldCorrection=imgBrightFieldCorrection,
-                                                         MarginBase=imgMarginBase, MarginPercentage=imgMarginPercentage, ExtendObjectDetection=imgExtendObjectDetection};
-
-
-                if (version)
+            if (parseResult.Errors.Count > 0)
+            {
+                foreach (ParseError parseError in parseResult.Errors)
                 {
-                    HandleVersion();
-                    return;
+                    Console.Error.WriteLine(parseError.Message);
                 }
-                Convert(input, output, raw, metadatagreedy, setInformation, setDefinitionFile, imgOpts);
+                return;
             }
-            foreach (ParseError parseError in parseResult.Errors)
+
+            FileInfo    input                    = parseResult.GetValueForArgument(inputArgument);
+            FileInfo?   output                   = parseResult.GetValueForOption(outputOption);
+            bool        raw                      = parseResult.GetValueForOption(rawOption);
+            bool        metadatagreedy           = parseResult.GetValueForOption(metadatagreedyOption);
+            bool        setInformation           = parseResult.GetValueForOption(setInformationOption);
+            FileInfo?   setDefinitionFile        = parseResult.GetValueForOption(setDefinitionOverride);
+            bool        processImages            = parseResult.GetValueForOption(imageProcessing);
+            int         imgThreshold             = parseResult.GetValueForOption(imageProcessingThreshold);
+            int         imgErosionDilation       = parseResult.GetValueForOption(imageProcessingErosionDilation);
+            bool        imgBrightFieldCorrection = parseResult.GetValueForOption(imageProcessingBrightFieldCorrection);
+            int         imgMarginBase            = parseResult.GetValueForOption(imageProcessingMarginBase);
+            int         imgMarginPercentage      = parseResult.GetValueForOption(imageProcessingMarginPercentage);
+            bool        imgExtendObjectDetection = parseResult.GetValueForOption(imageProcessingExtendObjectDetection);
+
+            ImageProcessingOptions imgOpts = new()
             {
-                Console.Error.WriteLine(parseError.Message);
-            }
-            // rootCommand.Invoke(args);
+                Process = processImages,
+                Threshold = imgThreshold,
+                ErosionDilation = imgErosionDilation,
+                BrightFieldCorrection = imgBrightFieldCorrection,
+                MarginBase = imgMarginBase,
+                MarginPercentage = imgMarginPercentage,
+                ExtendObjectDetection = imgExtendObjectDetection
+            };
+
+            Convert(input, output, raw, metadatagreedy, setInformation, setDefinitionFile, imgOpts);
         }
 
         private record struct ImageProcessingOptions(bool Process, int Threshold, int ErosionDilation, bool BrightFieldCorrection, int MarginBase, int MarginPercentage, bool ExtendObjectDetection);
@@ -148,7 +156,7 @@ namespace Cyz2Json
         /// Convert the flow cytometry data in the file designated by cyzFilename to Javscript Object Notation (JSON).
         /// If jsonFilename is null, echo the JSON to the console, otherwise store it a file designated by jsonFilename.
         /// </summary>
-        static void Convert(FileInfo cyzFilename, FileInfo jsonFilename, bool isRaw, bool metadatagreedy, bool setInformation, FileInfo setDefinitionFile, ImageProcessingOptions imgOpts)
+        static void Convert(FileInfo cyzFilename, FileInfo? jsonFilename, bool isRaw, bool metadatagreedy, bool setInformation, FileInfo? setDefinitionFile, ImageProcessingOptions imgOpts)
         {
             var data = LoadData(cyzFilename.FullName, isRaw, metadatagreedy, setInformation, setDefinitionFile, imgOpts);
 
@@ -172,7 +180,7 @@ namespace Cyz2Json
         /// <summary>
         /// Load all the flow cytometry data from the CYZ file designated by pathname.
         /// </summary>
-        private static Dictionary<string, object> LoadData(string pathname, bool isRaw, bool metadatagreedy, bool setInformation, FileInfo setDefinitionFile, ImageProcessingOptions imgOpts)
+        private static Dictionary<string, object> LoadData(string pathname, bool isRaw, bool metadatagreedy, bool setInformation, FileInfo? setDefinitionFile, ImageProcessingOptions imgOpts)
         {
             var data = new Dictionary<string, object>();
 
