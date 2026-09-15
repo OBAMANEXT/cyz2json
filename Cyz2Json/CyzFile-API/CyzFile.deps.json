@@ -15,20 +15,21 @@
           "OpenCvSharp4.runtime.win": "4.10.0.20240616",
           "System.Drawing.Common": "8.0.8",
           "System.IO.Ports": "8.0.0",
-          "log4net": "3.0.3"
+          "UnitsNet": "5.67.0",
+          "log4net": "3.3.1"
         },
         "runtime": {
           "CyzFile.dll": {}
         }
       },
-      "log4net/3.0.3": {
+      "log4net/3.3.1": {
         "dependencies": {
           "System.Configuration.ConfigurationManager": "4.5.0"
         },
         "runtime": {
           "lib/netstandard2.0/log4net.dll": {
-            "assemblyVersion": "3.0.3.0",
-            "fileVersion": "3.0.3.0"
+            "assemblyVersion": "3.3.1.0",
+            "fileVersion": "3.3.1.0"
           }
         }
       },
@@ -237,6 +238,28 @@
             "fileVersion": "4.6.26515.6"
           }
         }
+      },
+      "UnitsNet/5.67.0": {
+        "runtime": {
+          "lib/net8.0/UnitsNet.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.0.0"
+          }
+        },
+        "resources": {
+          "lib/net8.0/fr-CA/UnitsNet.resources.dll": {
+            "locale": "fr-CA"
+          },
+          "lib/net8.0/nb-NO/UnitsNet.resources.dll": {
+            "locale": "nb-NO"
+          },
+          "lib/net8.0/ru-RU/UnitsNet.resources.dll": {
+            "locale": "ru-RU"
+          },
+          "lib/net8.0/zh-CN/UnitsNet.resources.dll": {
+            "locale": "zh-CN"
+          }
+        }
       }
     }
   },
@@ -246,12 +269,12 @@
       "serviceable": false,
       "sha512": ""
     },
-    "log4net/3.0.3": {
+    "log4net/3.3.1": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-LAZBO0rHo4DM56GIt124NaXKo6LVZcfiuWVgODdUnhPNMzTOlRJWOEIXo8zVNLm426B+coDc4ocfTsTw7R7Zeg==",
-      "path": "log4net/3.0.3",
-      "hashPath": "log4net.3.0.3.nupkg.sha512"
+      "sha512": "sha512-fgQ8XkqF0r4/CRfAq8xZqlPrG0/9n4rJAa1HlFGQMXtCAxbbLzXyuXCbu65NUbcKzQ9KDYr4239NNqipVRCv6A==",
+      "path": "log4net/3.3.1",
+      "hashPath": "log4net.3.3.1.nupkg.sha512"
     },
     "MathNet.Numerics/5.0.0": {
       "type": "package",
@@ -371,6 +394,13 @@
       "sha512": "sha512-9gdyuARhUR7H+p5CjyUB/zPk7/Xut3wUSP8NJQB6iZr8L3XUXTMdoLeVAg9N4rqF8oIpE7MpdqHdDHQ7XgJe0g==",
       "path": "system.security.permissions/4.5.0",
       "hashPath": "system.security.permissions.4.5.0.nupkg.sha512"
+    },
+    "UnitsNet/5.67.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-mz/2AqB2RJX33mQOFm+cNSKv/+9IxbKyzpjebEePjY8o8YlYW/Mx/VSanj+azOtA1vqNAki8tcOu310iq7LiCQ==",
+      "path": "unitsnet/5.67.0",
+      "hashPath": "unitsnet.5.67.0.nupkg.sha512"
     }
   }
 }
